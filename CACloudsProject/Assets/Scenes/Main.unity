@@ -428,5 +428,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _DrawGridOutline
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}

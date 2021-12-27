@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3797599305533910049}
   - component: {fileID: 4791334047874285691}
+  - component: {fileID: 8974632330823456379}
+  - component: {fileID: 4717445481749669553}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -44,3 +46,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CAGridSettings: {fileID: 11400000, guid: 5d74ce4fb0b4bea4f9ecfb9bf378ff5d, type: 2}
+  _CACellSettings: {fileID: 11400000, guid: 64ce787c2941b244fa047710fea62b07, type: 2}
+  _DrawGridOutline: 1
+--- !u!114 &8974632330823456379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3693451702640781443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9b1210f19099cc45b17bbd7a953f490, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CASettings: {fileID: 11400000, guid: af4d545bbe07e7145a61672364bd41a2, type: 2}
+--- !u!114 &4717445481749669553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3693451702640781443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af973e64129f05444a51784c955d8345, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
