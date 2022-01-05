@@ -12,4 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0278364421a195488fdb4c49e246853, type: 3}
   m_Name: CASettings
   m_EditorClassIdentifier: 
-  MinimumUpdateTime: 1
+  MinimumUpdateTime: 0.2
+  ActProbabilityAtStart: 0.06
+  HumProbabilityAtStart: 0.08
+  ExtProbability: 0.1
+  HUmProbability: 0.008
+  ActProbability: 0.007

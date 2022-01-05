@@ -1,14 +1,17 @@
 using UnityEngine;
-using UnityEditor;
+using System.Collections.Generic;
 public class CAGrid : MonoBehaviour
 {
     [SerializeField] private CAGridSettings _CAGridSettings = null;
     [SerializeField] private CACellSettings _CACellSettings = null;
     [SerializeField] private bool _DrawGridOutline = true;
-    private CACell[] _Cells;
+    [SerializeField] private bool _DrawCloudCells = true;
+    
+    private CellularAutomaton _CA;
 
     private void Start()
     {
+        _CA = GetComponent<CellularAutomaton>();
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
         InitializeCells();
     }
@@ -17,12 +20,13 @@ public class CAGrid : MonoBehaviour
     {
         if (_DrawGridOutline)
             DrawGridOutline();
+        if (_DrawCloudCells && _CA != null)
+            DrawCloudCells();
     }
 
     private void InitializeCells()
     {
-        _Cells = new CACell[_CAGridSettings.Columns * _CAGridSettings.Rows * _CAGridSettings.Depth];
-        Debug.Log(string.Format("Initialized {0} cells", _Cells.Length));
+        _CA.InitializeCA();
     }
 
     private void DrawGridOutline()
@@ -36,4 +40,27 @@ public class CAGrid : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawLine(gridPos, gridPos + (transform.up * _CAGridSettings.Rows * cellHeight));
     }
+
+    private void DrawCloudCells()
+    {
+        List<Vector3Int> cloudCells = _CA.CloudCells ;
+        if (cloudCells == null) return;
+
+        var gridPos = transform.position;
+        float cellHeight = _CAGridSettings.CellHeight;
+        float halfHeight = cellHeight / 2f;
+       
+        Gizmos.color = _CACellSettings.CloudColor;
+        for(int idx = 0;idx<cloudCells.Count;idx++)
+        {
+            Vector3 center = gridPos + new Vector3(
+                              cloudCells[idx].x * cellHeight + halfHeight
+                            , cloudCells[idx].y * cellHeight + halfHeight
+                            , cloudCells[idx].z * cellHeight + halfHeight);
+
+            Gizmos.DrawSphere(center, cellHeight);
+        }
+    }
+
+    
 }

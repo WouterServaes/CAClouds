@@ -61,6 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CASettings: {fileID: 11400000, guid: af4d545bbe07e7145a61672364bd41a2, type: 2}
+  _CAGridSettings: {fileID: 11400000, guid: 5d74ce4fb0b4bea4f9ecfb9bf378ff5d, type: 2}
 --- !u!114 &4717445481749669553
 MonoBehaviour:
   m_ObjectHideFlags: 0

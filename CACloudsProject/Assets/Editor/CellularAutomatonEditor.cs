@@ -18,6 +18,7 @@ public class CellularAutomatonEditor : Editor
             PauseContinueButton(ca);
             ResetButton(ca);
         }
+            CAInfo(ca);
     }
 
     private void PauseContinueButton(CellularAutomaton ca)
@@ -38,5 +39,15 @@ public class CellularAutomatonEditor : Editor
         {
             ca.ResetAction.Invoke();
         }
+    }
+
+    private void CAInfo(CellularAutomaton ca)
+    {
+        GUILayout.Label(string.Format("CA cell count: {0}", ca.CellCount));
+        GUILayout.Label(string.Format("Cloud count: {0}", ca.CloudCount));
+        GUILayout.Label(string.Format("CA memory usage: {0} bytes", ca.CAMemoryCount));
+        GUILayout.Label(string.Format("CA memory usage both arrays: {0} bytes", ca.CAMemoryCount * 2));
+        GUILayout.Label(string.Format("Cell memory usage: {0} bytes", ca.CellMemoryCount));
+        GUILayout.Label(string.Format("Average calculation time: {0} seconds", ca.AvgCalcTime));
     }
 }
