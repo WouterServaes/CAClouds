@@ -4,6 +4,7 @@ public class CAGrid : MonoBehaviour
 {
     [SerializeField] private CAGridSettings _CAGridSettings = null;
     [SerializeField] private CACellSettings _CACellSettings = null;
+    [SerializeField] private WindSettings _WindSettings = null;
     [SerializeField] private bool _DrawGridOutline = true;
     [SerializeField] private bool _DrawCloudCells = true;
     
@@ -13,6 +14,7 @@ public class CAGrid : MonoBehaviour
     {
         _CA = GetComponent<CellularAutomaton>();
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
+        RotateToWind();
         InitializeCells();
     }
 
@@ -62,5 +64,10 @@ public class CAGrid : MonoBehaviour
         }
     }
 
-    
+    private void RotateToWind()
+    {
+        var dir = _WindSettings.WindDirection.normalized;
+        dir.y = 0f;
+        transform.right = dir;
+    }
 }

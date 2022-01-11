@@ -47,7 +47,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CAGridSettings: {fileID: 11400000, guid: 5d74ce4fb0b4bea4f9ecfb9bf378ff5d, type: 2}
   _CACellSettings: {fileID: 11400000, guid: 64ce787c2941b244fa047710fea62b07, type: 2}
+  _WindSettings: {fileID: 11400000, guid: 48d0ed7de55110642934a39dd7adc05e, type: 2}
   _DrawGridOutline: 1
+  _DrawCloudCells: 1
 --- !u!114 &8974632330823456379
 MonoBehaviour:
   m_ObjectHideFlags: 0

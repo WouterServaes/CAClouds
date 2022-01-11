@@ -9,12 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0278364421a195488fdb4c49e246853, type: 3}
-  m_Name: CASettings
+  m_Script: {fileID: 11500000, guid: fa299a86f7e61a345ab7d57209067007, type: 3}
+  m_Name: WindSettings
   m_EditorClassIdentifier: 
-  MinimumUpdateTime: 1
-  ActProbabilityAtStart: 0.06
-  HumProbabilityAtStart: 0.08
-  ExtProbability: 0.05
-  HUmProbability: 0.008
-  ActProbability: 0.07
+  WindSpeed: 0
+  WindDirection: {x: 0.5, y: 0, z: 0.5}
