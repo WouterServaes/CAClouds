@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: CASettings
   m_EditorClassIdentifier: 
   MinimumUpdateTime: 1
-  ActProbabilityAtStart: 0.06
-  HumProbabilityAtStart: 0.08
-  ExtProbability: 0.05
-  HUmProbability: 0.008
-  ActProbability: 0.07
+  ActProbabilityAtStart: 0.001
+  HumProbabilityAtStart: 0.1
+  ExtProbability: 0.1
+  HumProbability: 0.1
+  ActProbability: 0.001

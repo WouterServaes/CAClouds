@@ -430,7 +430,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _DrawCloudCells
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _DrawGridOutline

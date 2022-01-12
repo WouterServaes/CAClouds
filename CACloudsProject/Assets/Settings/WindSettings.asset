@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: WindSettings
   m_EditorClassIdentifier: 
   WindSpeed: 0
-  WindDirection: {x: 0.5, y: 0, z: 0.5}
+  WindDirection: {x: 0, y: 0, z: 0}

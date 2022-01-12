@@ -112,11 +112,9 @@ public class CellularAutomaton : MonoBehaviour
             {
                 for (int idxK = 0; idxK < _CAGridSettings.Depth; idxK++)
                 {
-
                     processStateTransitionRules(idxI, idxJ, idxK);
                     ProcessExtFormRules(idxI, idxJ, idxK);
-
-
+                    //ProcessWindRules(idxI, idxJ, idxK);
 
                     //saving the cell position of cloud cells so CAGrid can visualize those
                     if (_NextCells[idxI, idxJ, idxK, 1])
@@ -150,14 +148,37 @@ public class CellularAutomaton : MonoBehaviour
     {
         //cloud extinction and formation rules
         float rand = UnityEngine.Random.Range(0f, 1f);
-        //cld becomes 0 if cld is 1 and rand is smaller than the extinction probability
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 1] && rand < _CASettings.ExtProbability;
 
         //hum becomes 1 if hum is 1 or rand is smaller than humidity probability
         _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 2] || rand < _CASettings.HumProbability;
+        
+        //cld becomes 0 if cld is 1 and rand is smaller than the extinction probability
+        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 1] && rand < _CASettings.ExtProbability;
 
         //act becomes 1 if act is 1 or rand is smaller than act probability
         _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 0] || rand < _CASettings.ActProbability;
+    }
+
+    private void ProcessWindRules(int cellIdxI, int cellIdxJ, int cellIdxK)
+    {
+        //advection by wind rules
+        float cellHeight = GetCellHeightInWorld(cellIdxJ);
+        int cellDisplacementByWind = WindHelper.GetWindSpeedCellDisplacementAtHeight(cellHeight);
+        //hum
+        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = cellIdxI - cellDisplacementByWind > 0
+            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 2];
+        //cld
+        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = cellIdxI - cellDisplacementByWind > 0
+            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 1];
+        //act
+        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = cellIdxI - cellDisplacementByWind > 0
+            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 0];
+
+    }
+
+    private float GetCellHeightInWorld(int cellIdxJ)
+    {
+        return transform.position.y + cellIdxJ * _CAGridSettings.CellHeight;
     }
     private bool GetActFromSurrounding(int cellIdxI, int cellIdxJ, int cellIdxK)
     {
