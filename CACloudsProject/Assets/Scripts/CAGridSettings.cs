@@ -4,8 +4,8 @@ using UnityEngine.Events;
 public class CAGridSettings : ScriptableObject
 {
     [Header("Grid dimensions")]
-    public int Rows;
     public int Columns;
+    public int Rows;
     public int Depth;
     [Header("Cell dimensions")]
     public float CellHeight;

@@ -9,12 +9,12 @@ public class CAGrid : MonoBehaviour
     [SerializeField] private bool _DrawCloudCells = true;
     
     private CellularAutomaton _CA;
-
     private void Start()
     {
         _CA = GetComponent<CellularAutomaton>();
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
-        RotateToWind();
+        _WindSettings.UpdatedWind += RotateGridToWind;
+        RotateGridToWind();
         InitializeCells();
     }
 
@@ -48,23 +48,25 @@ public class CAGrid : MonoBehaviour
         List<Vector3Int> cloudCells = _CA.CloudCells ;
         if (cloudCells == null) return;
 
-        var gridPos = transform.position;
+        Vector3 gridPos = transform.position;
+        
         float cellHeight = _CAGridSettings.CellHeight;
         float halfHeight = cellHeight / 2f;
        
         Gizmos.color = _CACellSettings.CloudColor;
-        for(int idx = 0;idx<cloudCells.Count;idx++)
+        for(int idx = 0; idx < cloudCells.Count;idx++)
         {
-            Vector3 center = gridPos + new Vector3(
+            Vector3 cellPos = new Vector3(
                               cloudCells[idx].x * cellHeight + halfHeight
                             , cloudCells[idx].y * cellHeight + halfHeight
                             , cloudCells[idx].z * cellHeight + halfHeight);
+            cellPos = transform.localToWorldMatrix * cellPos;
 
-            Gizmos.DrawSphere(center, cellHeight);
+            Gizmos.DrawSphere(cellPos, halfHeight);
         }
     }
 
-    private void RotateToWind()
+    private void RotateGridToWind()
     {
         var dir = _WindSettings.WindDirection.normalized;
         dir.y = 0f;

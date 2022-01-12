@@ -48,7 +48,7 @@ public class CellularAutomaton : MonoBehaviour
     {
         _Cells = new bool[_CAGridSettings.Columns, _CAGridSettings.Rows, _CAGridSettings.Depth, _CellWidthInArray];
         _NextCells = new bool[_CAGridSettings.Columns, _CAGridSettings.Rows, _CAGridSettings.Depth, _CellWidthInArray];
-
+        _GenerationCount = 0;
         SetInitialValues();
 
         Debug.Log(string.Format("Initialized {0} cells", _Cells.Length / _CellWidthInArray));
@@ -154,7 +154,7 @@ public class CellularAutomaton : MonoBehaviour
         _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 1] && rand < _CASettings.ExtProbability;
 
         //hum becomes 1 if hum is 1 or rand is smaller than humidity probability
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 2] || rand < _CASettings.HUmProbability;
+        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 2] || rand < _CASettings.HumProbability;
 
         //act becomes 1 if act is 1 or rand is smaller than act probability
         _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 0] || rand < _CASettings.ActProbability;

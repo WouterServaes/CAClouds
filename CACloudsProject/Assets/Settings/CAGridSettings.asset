@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e0ecce1aaa390b43922a319d4f273c3, type: 3}
   m_Name: CAGridSettings
   m_EditorClassIdentifier: 
-  Rows: 50
-  Columns: 100
-  Depth: 100
+  Columns: 256
+  Rows: 20
+  Depth: 128
   CellHeight: 10

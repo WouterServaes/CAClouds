@@ -10,6 +10,6 @@ public class CASettings : ScriptableObject
     public float HumProbabilityAtStart = 0;
     [Header("Cloud extinction")]
     public float ExtProbability = 0;
-    public float HUmProbability = 0;
+    public float HumProbability = 0;
     public float ActProbability = 0;
 }
