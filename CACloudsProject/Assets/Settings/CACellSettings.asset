@@ -12,5 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdef9800810d7f640be5301a3e4917d9, type: 3}
   m_Name: CACellSettings
   m_EditorClassIdentifier: 
-  OnColor: {r: 0.49056602, g: 0.49056602, b: 0.49056602, a: 1}
-  OffColor: {r: 0, g: 0, b: 0, a: 0}
+  CloudColor: {r: 1, g: 0.06132078, b: 0.88894844, a: 1}

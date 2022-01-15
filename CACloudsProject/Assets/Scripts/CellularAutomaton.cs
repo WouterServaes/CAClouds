@@ -1,13 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class CellularAutomaton : MonoBehaviour
 {
     [SerializeField] private CASettings _CASettings = null;
+    [SerializeField] private WindSettings _WindSettings = null;
     private CAGridSettings _CAGridSettings = null;
     public CAGridSettings CAGridSettings { set { _CAGridSettings = value; } }
+
     private bool _IsPaused = true;
 
     private BitArray _Act, _Cld, _Hum, _NextAct, _NextCld, _NextHum;
@@ -105,22 +108,27 @@ public class CellularAutomaton : MonoBehaviour
 
     private void UpdateCA()
     {
-        _Metrics.StartCalcTimer();
 
+        _Metrics.StartCalcTimer();
+        //---start metrics---
         for (int cellIdx = 0; cellIdx < _CAGridSettings.TotalCells; cellIdx++)
         {
             processStateTransitionRules(cellIdx);
-            ProcessExtFormRules(cellIdx);
-            ProcessWind(cellIdx);
+            if (_GenerationCount >= _CASettings.ExtStartGeneration) ProcessExtFormRules(cellIdx);
+            if (_GenerationCount >= _CASettings.WindStartGeneration) ProcessWind(cellIdx);
+            
             //saving the cell position of cloud cells so CAGrid can visualize those
             if (_NextCld[cellIdx])
                 _CloudCells.Add(cellIdx);
         }
 
-        _Act = _NextAct;
-        _Cld = _NextCld;
-        _Hum = _NextHum;
+        //copy the t+1 array into t
+        //.Clone -> BitArray is a reference type
+        _Act = (BitArray)_NextAct.Clone();
+        _Cld = (BitArray)_NextCld.Clone();
+        _Hum = (BitArray)_NextHum.Clone();
 
+        //---stop metrics---
         _Metrics.StopCalcTimer();
         _GenerationCount++;
     }
@@ -145,13 +153,13 @@ public class CellularAutomaton : MonoBehaviour
     private void ProcessExtFormRules(int cellIdx)
     {
         //cloud extinction and formation rules
-        float rand = UnityEngine.Random.Range(0f, 1f);
+        float rand = Random.Range(0f, 1f);
 
         //hum becomes 1 if hum is 1 or rand is smaller than humidity probability
         _NextHum[cellIdx] = _Hum[cellIdx] || rand < _CASettings.HumProbability;
 
-        //cld becomes 0 if cld is 1 and rand is smaller than the extinction probability
-        _NextCld[cellIdx] = _Cld[cellIdx] && rand < _CASettings.ExtProbability;
+        //cld becomes 0 if cld is 1 and rand is bigger than the extinction probability
+        _NextCld[cellIdx] = _Cld[cellIdx] && rand > _CASettings.ExtProbability;
 
         //act becomes 1 if act is 1 or rand is smaller than act probability
         _NextAct[cellIdx] = _Act[cellIdx] || rand < _CASettings.ActProbability;
@@ -165,18 +173,28 @@ public class CellularAutomaton : MonoBehaviour
         OneDToThreeDIndex(cellIdx, out cellIdxI, out cellIdxJ, out cellIdxK);
 
         float cellHeight = GetCellHeightInWorld(cellIdxK);
-        int cellDisplacementByWind = WindHelper.GetWindSpeedCellDisplacementAtHeight(cellHeight);
-
-        if(cellIdxI - cellDisplacementByWind > 0)
+        int cellDisplacementByWind = WindHelper.GetWindSpeedCellDisplacementAtHeight();
+        
+        if(cellIdxI - cellDisplacementByWind >= 0)
         {
             int cellIdxDisplacementByWind = ThreeDToOneDIndex(cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK);
+              
             //hum
             _NextHum[cellIdx] = _Hum[cellIdxDisplacementByWind];
+
             //cld
             _NextCld[cellIdx] = _Cld[cellIdxDisplacementByWind];
+
             //act
             _NextAct[cellIdx] = _Act[cellIdxDisplacementByWind];
         }
+        else if(cellIdx == 0)
+        {
+            _NextHum[cellIdx] = false;
+            _NextCld[cellIdx] = false;
+            _NextAct[cellIdx] = false;
+        }
+        
     }
 
     private float GetCellHeightInWorld(int cellIdxK)

@@ -8,6 +8,8 @@ public class CASettings : ScriptableObject
     [Header("Clouds at start")]
     public float ActProbabilityAtStart = 0;
     public float HumProbabilityAtStart = 0;
+    public int WindStartGeneration = 0;
+    public int ExtStartGeneration = 0;
     [Header("Cloud extinction")]
     public float ExtProbability = 0;
     public float HumProbability = 0;
