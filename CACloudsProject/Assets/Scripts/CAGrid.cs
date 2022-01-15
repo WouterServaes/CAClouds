@@ -12,6 +12,7 @@ public class CAGrid : MonoBehaviour
     private void Start()
     {
         _CA = GetComponent<CellularAutomaton>();
+        _CA.CAGridSettings = _CAGridSettings;
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
         _WindSettings.UpdatedWind += RotateGridToWind;
         RotateGridToWind();
@@ -45,7 +46,7 @@ public class CAGrid : MonoBehaviour
 
     private void DrawCloudCells()
     {
-        List<Vector3Int> cloudCells = _CA.CloudCells ;
+        List<int> cloudCells = _CA.CloudCells ;
         if (cloudCells == null) return;
 
         Vector3 gridPos = transform.position;
@@ -56,10 +57,14 @@ public class CAGrid : MonoBehaviour
         Gizmos.color = _CACellSettings.CloudColor;
         for(int idx = 0; idx < cloudCells.Count;idx++)
         {
+            int cellIdxK, cellIdxJ, cellIdxI;
+            _CA.OneDToThreeDIndex(cloudCells[idx], out cellIdxI, out cellIdxJ, out cellIdxK);
+
             Vector3 cellPos = new Vector3(
-                              cloudCells[idx].x * cellHeight + halfHeight
-                            , cloudCells[idx].y * cellHeight + halfHeight
-                            , cloudCells[idx].z * cellHeight + halfHeight);
+                              cellIdxI * cellHeight + halfHeight
+                            , cellIdxJ * cellHeight + halfHeight
+                            , cellIdxK * cellHeight + halfHeight);
+
             cellPos = transform.localToWorldMatrix * cellPos;
 
             Gizmos.DrawSphere(cellPos, halfHeight);

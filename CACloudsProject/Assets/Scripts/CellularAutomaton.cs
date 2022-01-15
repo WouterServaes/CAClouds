@@ -1,21 +1,22 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Threading;
+
 public class CellularAutomaton : MonoBehaviour
 {
     [SerializeField] private CASettings _CASettings = null;
-    [SerializeField] private CAGridSettings _CAGridSettings = null;
+    private CAGridSettings _CAGridSettings = null;
+    public CAGridSettings CAGridSettings { set { _CAGridSettings = value; } }
     private bool _IsPaused = true;
 
-    private int _GenerationCount = 0;
-    private bool[,,,] _Cells;
-    private bool[,,,] _NextCells;
+    private BitArray _Act, _Cld, _Hum, _NextAct, _NextCld, _NextHum;
 
-    private List<Vector3Int> _CloudCells = new List<Vector3Int>();
-    public List<Vector3Int> CloudCells => _CloudCells;
-    private int _CellWidthInArray = 3;
+    private int _GenerationCount = 0;
+   
+    private List<int> _CloudCells = new List<int>();
+    public List<int> CloudCells => _CloudCells;
+    private int _StateCount = 3;
     //state var positions:
     //0 = act
     //1 = cld
@@ -23,6 +24,7 @@ public class CellularAutomaton : MonoBehaviour
 
     //Invoked in CellularAutomatonEditor by pressing GUI buttons
     public UnityAction<bool> PauseContinueAction; //pauses and continues ca, true = paused | false = not paused
+
     public UnityAction ResetAction; //resets ca
 
     //Update timer
@@ -32,11 +34,13 @@ public class CellularAutomaton : MonoBehaviour
     private Metrics _Metrics = null;
 
     //info properties
-    public int CAMemoryCount => (_Cells == null) ? 0 : sizeof(bool) * _Cells.Length;
-    public int CellMemoryCount => sizeof(bool) * _CellWidthInArray;
-    public int CellCount => (_Cells == null) ? 0 : _Cells.Length / _CellWidthInArray;
+    public int CAMemoryCount => (_CAGridSettings == null) ? 0 : _CAGridSettings.TotalCells * _StateCount;
+    public int CellMemoryCount => _StateCount;
+    public int CellCount => (_CAGridSettings == null) ? 0 : _CAGridSettings.TotalCells;
     public int CloudCount => _CloudCells.Count;
-    public float AvgCalcTime => (_Metrics)?_Metrics.GetAverageCalcTime():0;
+    public int GenerationCount => _GenerationCount;
+    public float AvgCalcTime => (_Metrics) ? _Metrics.GetAverageCalcTime() : 0;
+
     private void Start()
     {
         _Metrics = GetComponent<Metrics>();
@@ -46,31 +50,28 @@ public class CellularAutomaton : MonoBehaviour
 
     public void InitializeCA()
     {
-        _Cells = new bool[_CAGridSettings.Columns, _CAGridSettings.Rows, _CAGridSettings.Depth, _CellWidthInArray];
-        _NextCells = new bool[_CAGridSettings.Columns, _CAGridSettings.Rows, _CAGridSettings.Depth, _CellWidthInArray];
+        _Act = new BitArray(_CAGridSettings.TotalCells, false);
+        _Cld = new BitArray(_CAGridSettings.TotalCells, false);
+        _Hum = new BitArray(_CAGridSettings.TotalCells, false);
+
+        _NextAct = new BitArray(_CAGridSettings.TotalCells, false);
+        _NextCld = new BitArray(_CAGridSettings.TotalCells, false);
+        _NextHum = new BitArray(_CAGridSettings.TotalCells, false);
+
         _GenerationCount = 0;
         SetInitialValues();
 
-        Debug.Log(string.Format("Initialized {0} cells", _Cells.Length / _CellWidthInArray));
+        Debug.Log(string.Format("Initialized {0} cells", _NextAct.Count));
     }
 
     private void SetInitialValues()
     {
-        //hum and act are set randomly at start
-        for (int idxI = 0; idxI < _CAGridSettings.Columns; idxI++)
+        for (int idx = 0; idx < _CAGridSettings.TotalCells; idx++)
         {
-            for (int idxJ = 0; idxJ < _CAGridSettings.Rows; idxJ++)
-            {
-                for (int idxK = 0; idxK < _CAGridSettings.Depth; idxK++)
-                {
-                    //hum
-                    _Cells[idxI, idxJ, idxK, 2] = UnityEngine.Random.Range(0f, 1f) <= _CASettings.HumProbabilityAtStart;
-
-                    //act can't be one if hum is zero at start
-                    if (!_Cells[idxI, idxJ, idxK, 2])
-                        _Cells[idxI, idxJ, idxK, 0] = UnityEngine.Random.Range(0f, 1f) <= _CASettings.ActProbabilityAtStart;
-                }
-            }
+            bool humAtStart = Random.Range(0f, 1f) <= _CASettings.HumProbabilityAtStart;
+            _Hum[idx] = humAtStart;
+            if (!humAtStart)
+                _Act[idx] = Random.Range(0f, 1f) <= _CASettings.ActProbabilityAtStart;
         }
     }
 
@@ -105,96 +106,124 @@ public class CellularAutomaton : MonoBehaviour
     private void UpdateCA()
     {
         _Metrics.StartCalcTimer();
-        
-        for (int idxI = 0; idxI < _CAGridSettings.Columns; idxI++)
-        {
-            for (int idxJ = 0; idxJ < _CAGridSettings.Rows; idxJ++)
-            {
-                for (int idxK = 0; idxK < _CAGridSettings.Depth; idxK++)
-                {
-                    processStateTransitionRules(idxI, idxJ, idxK);
-                    ProcessExtFormRules(idxI, idxJ, idxK);
-                    //ProcessWindRules(idxI, idxJ, idxK);
 
-                    //saving the cell position of cloud cells so CAGrid can visualize those
-                    if (_NextCells[idxI, idxJ, idxK, 1])
-                        _CloudCells.Add(new Vector3Int(idxI, idxJ, idxK));
-                }
-            }
+        for (int cellIdx = 0; cellIdx < _CAGridSettings.TotalCells; cellIdx++)
+        {
+            processStateTransitionRules(cellIdx);
+            ProcessExtFormRules(cellIdx);
+            ProcessWind(cellIdx);
+            //saving the cell position of cloud cells so CAGrid can visualize those
+            if (_NextCld[cellIdx])
+                _CloudCells.Add(cellIdx);
         }
-        _Cells = _NextCells;
+
+        _Act = _NextAct;
+        _Cld = _NextCld;
+        _Hum = _NextHum;
+
         _Metrics.StopCalcTimer();
         _GenerationCount++;
-        Debug.Log("Updated CA gen " + _GenerationCount);
     }
 
-    private void processStateTransitionRules(int cellIdxI, int cellIdxJ, int cellIdxK)
+    
+    private void processStateTransitionRules(int cellIdx)
     {
         //simple state transition rules
-        bool currentAct = _Cells[cellIdxI, cellIdxJ, cellIdxK, 0]
-            , currentCld = _Cells[cellIdxI, cellIdxJ, cellIdxK, 1]
-            , currentHum = _Cells[cellIdxI, cellIdxJ, cellIdxK, 2];
+        bool currentAct = _Act[cellIdx]
+            , currentCld = _Cld[cellIdx]
+            , currentHum = _Hum[cellIdx];
         //hum
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = currentHum && !currentAct;
+        _NextHum[cellIdx] = currentHum && !currentAct;
 
         //cld
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = currentCld || currentAct;
+        _NextCld[cellIdx] = currentCld || currentAct;
 
         //act
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = !currentAct && currentHum && GetActFromSurrounding(cellIdxI, cellIdxJ, cellIdxK);
+        _NextAct[cellIdx] = !currentAct && currentHum && GetActFromSurrounding(cellIdx);
     }
 
-    private void ProcessExtFormRules(int cellIdxI, int cellIdxJ, int cellIdxK)
+    private void ProcessExtFormRules(int cellIdx)
     {
         //cloud extinction and formation rules
         float rand = UnityEngine.Random.Range(0f, 1f);
 
         //hum becomes 1 if hum is 1 or rand is smaller than humidity probability
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 2] || rand < _CASettings.HumProbability;
-        
+        _NextHum[cellIdx] = _Hum[cellIdx] || rand < _CASettings.HumProbability;
+
         //cld becomes 0 if cld is 1 and rand is smaller than the extinction probability
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 1] && rand < _CASettings.ExtProbability;
+        _NextCld[cellIdx] = _Cld[cellIdx] && rand < _CASettings.ExtProbability;
 
         //act becomes 1 if act is 1 or rand is smaller than act probability
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = _Cells[cellIdxI, cellIdxJ, cellIdxK, 0] || rand < _CASettings.ActProbability;
+        _NextAct[cellIdx] = _Act[cellIdx] || rand < _CASettings.ActProbability;
     }
 
-    private void ProcessWindRules(int cellIdxI, int cellIdxJ, int cellIdxK)
+    private void ProcessWind(int cellIdx)
     {
         //advection by wind rules
-        float cellHeight = GetCellHeightInWorld(cellIdxJ);
+
+        int cellIdxK, cellIdxJ, cellIdxI;
+        OneDToThreeDIndex(cellIdx, out cellIdxI, out cellIdxJ, out cellIdxK);
+
+        float cellHeight = GetCellHeightInWorld(cellIdxK);
         int cellDisplacementByWind = WindHelper.GetWindSpeedCellDisplacementAtHeight(cellHeight);
-        //hum
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 2] = cellIdxI - cellDisplacementByWind > 0
-            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 2];
-        //cld
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 1] = cellIdxI - cellDisplacementByWind > 0
-            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 1];
-        //act
-        _NextCells[cellIdxI, cellIdxJ, cellIdxK, 0] = cellIdxI - cellDisplacementByWind > 0
-            && _Cells[cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK, 0];
 
+        if(cellIdxI - cellDisplacementByWind > 0)
+        {
+            int cellIdxDisplacementByWind = ThreeDToOneDIndex(cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK);
+            //hum
+            _NextHum[cellIdx] = _Hum[cellIdxDisplacementByWind];
+            //cld
+            _NextCld[cellIdx] = _Cld[cellIdxDisplacementByWind];
+            //act
+            _NextAct[cellIdx] = _Act[cellIdxDisplacementByWind];
+        }
     }
 
-    private float GetCellHeightInWorld(int cellIdxJ)
+    private float GetCellHeightInWorld(int cellIdxK)
     {
-        return transform.position.y + cellIdxJ * _CAGridSettings.CellHeight;
+        return transform.position.y + cellIdxK * _CAGridSettings.CellHeight;
     }
-    private bool GetActFromSurrounding(int cellIdxI, int cellIdxJ, int cellIdxK)
-    {
+
+    private bool GetActFromSurrounding(int cellIdx)
+    {       
+        int cellIdxK, cellIdxJ, cellIdxI;
+        OneDToThreeDIndex(cellIdx, out cellIdxI, out cellIdxJ, out cellIdxK);
+
         //checks the act from the surrounding cells of a cell;
-        //if a neighboring cell is out the grid, don't count that cell
+        //if a neighboring cell is out the grid, don't count that 
 
-        return (cellIdxI + 1 < _CAGridSettings.Columns && _Cells[cellIdxI + 1, cellIdxJ, cellIdxK, 0])
-            || (cellIdxI > 0 && _Cells[cellIdxI - 1, cellIdxJ, cellIdxK, 0])
-            || (cellIdxJ + 1 < _CAGridSettings.Rows && _Cells[cellIdxI, cellIdxJ + 1, cellIdxK, 0])
-            || (cellIdxJ > 0 && _Cells[cellIdxI, cellIdxJ - 1, cellIdxK, 0])
-            || (cellIdxK + 1 < _CAGridSettings.Depth && _Cells[cellIdxI, cellIdxJ, cellIdxK + 1, 0])
-            || (cellIdxK > 0 && _Cells[cellIdxI, cellIdxJ, cellIdxK - 1, 0])
-            || (cellIdxI + 2 < _CAGridSettings.Columns && _Cells[cellIdxI + 2, cellIdxJ, cellIdxK, 0])
-            || (cellIdxI > 1 && _Cells[cellIdxI - 2, cellIdxJ, cellIdxK, 0])
-            || (cellIdxJ + 2 < _CAGridSettings.Rows && _Cells[cellIdxI, cellIdxJ + 2, cellIdxK, 0])
-            || (cellIdxJ > 1 && _Cells[cellIdxI, cellIdxJ - 2, cellIdxK, 0])
-            || (cellIdxK > 1 && _Cells[cellIdxI, cellIdxJ, cellIdxK - 2, 0]);
+        return (cellIdxI + 1 < _CAGridSettings.Columns && _Act[ThreeDToOneDIndex(cellIdxI + 1, cellIdxJ, cellIdxK)])
+            || (cellIdxI > 0 && _Act[ThreeDToOneDIndex(cellIdxI - 1, cellIdxJ, cellIdxK)])
+
+            || (cellIdxJ + 1 < _CAGridSettings.Rows && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ + 1, cellIdxK)])
+            || (cellIdxJ > 0 && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ - 1, cellIdxK)])
+
+            || (cellIdxK + 1 < _CAGridSettings.Depth && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK + 1)])
+            || (cellIdxK > 0 && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK - 1)])
+
+            || (cellIdxI + 2 < _CAGridSettings.Columns && _Act[ThreeDToOneDIndex(cellIdxI + 2, cellIdxJ, cellIdxK)])
+            || (cellIdxI > 1 && _Act[ThreeDToOneDIndex(cellIdxI - 2, cellIdxJ, cellIdxK)])
+
+            || (cellIdxJ + 2 < _CAGridSettings.Rows && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ + 2, cellIdxK)])
+            || (cellIdxJ > 1 && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ - 2, cellIdxK)])
+
+            || (cellIdxK > 1 && _Act[ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK - 2)]);
+    }
+
+
+    //3d array index to 1d array index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
+    public int ThreeDToOneDIndex(int i, int j, int k)
+    {
+        return i + j * _CAGridSettings.Columns + k * _CAGridSettings.Columns * _CAGridSettings.Rows;
+    }
+
+    //1d index to 3d index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
+    public void OneDToThreeDIndex(int cellIdx, out int i, out int j, out int k)
+    {
+        k = cellIdx / (_CAGridSettings.Columns * _CAGridSettings.Rows);
+        cellIdx -= k * _CAGridSettings.Columns * _CAGridSettings.Rows;
+        j = cellIdx / _CAGridSettings.Columns;
+        cellIdx -= j * _CAGridSettings.Columns;
+        i = cellIdx / 1;
     }
 }

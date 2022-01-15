@@ -7,6 +7,7 @@ public class CAGridSettings : ScriptableObject
     public int Columns;
     public int Rows;
     public int Depth;
+    public int TotalCells => Columns * Rows * Depth;
     [Header("Cell dimensions")]
     public float CellHeight;
     
