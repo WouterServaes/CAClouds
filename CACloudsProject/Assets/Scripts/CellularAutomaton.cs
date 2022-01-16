@@ -188,7 +188,7 @@ public class CellularAutomaton : MonoBehaviour
             //act
             _NextAct[cellIdx] = _Act[cellIdxDisplacementByWind];
         }
-        else if(cellIdx == 0)
+        else if(cellIdxI == 0)
         {
             _NextHum[cellIdx] = false;
             _NextCld[cellIdx] = false;
