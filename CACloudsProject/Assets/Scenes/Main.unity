@@ -384,6 +384,14 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _CloudMesh
+      value: 
+      objectReference: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _CloudMaterial
+      value: 
+      objectReference: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _CAGridSettings
       value: 
       objectReference: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}

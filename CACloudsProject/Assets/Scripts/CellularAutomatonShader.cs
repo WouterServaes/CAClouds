@@ -1,7 +1,11 @@
+//These helped:
+//https://catlikecoding.com/unity/tutorials/basics/compute-shaders/
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+
 
 public class CellularAutomatonShader : MonoBehaviour
 {
@@ -21,7 +25,8 @@ public class CellularAutomatonShader : MonoBehaviour
 
     //CA Settings
     [SerializeField] private CASettings _CASettings = null;
-
+    [SerializeField] private Mesh _CloudMesh;
+    [SerializeField] private Material _CloudMaterial;
     //grid settings
     [SerializeField] private CAGridSettings _CAGridSettings = null;
 
@@ -73,7 +78,7 @@ public class CellularAutomatonShader : MonoBehaviour
         _HumNextBuffer = new ComputeBuffer(TotalInts, sizeof(int));
         _CldNextBuffer = new ComputeBuffer(TotalInts, sizeof(int));  
 
-        _CloudPositions = new ComputeBuffer(TotalInts, sizeof(float)*4);
+        _CloudPositions = new ComputeBuffer(TotalInts, sizeof(float)*3);
 
         _ComputeShader.SetBuffer(0, "_Act", _ActBuffer);
         _ComputeShader.SetBuffer(0, "_Hum", _HumBuffer);
@@ -81,6 +86,7 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetBuffer(0, "_ActNext", _ActNextBuffer);
         _ComputeShader.SetBuffer(0, "_HumNext", _HumNextBuffer);
         _ComputeShader.SetBuffer(0, "_CldNext", _CldNextBuffer);
+        _ComputeShader.SetBuffer(0, "_CloudPositions", _CloudPositions);
 
         _ComputeShader.SetInt("_CellCount", _CAGridSettings.TotalCells);
         _ComputeShader.SetInt("_Columns", _CAGridSettings.Columns);

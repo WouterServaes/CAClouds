@@ -43,6 +43,7 @@ RWStructuredBuffer<int> _ActNext;
 RWStructuredBuffer<int> _HumNext;
 RWStructuredBuffer<int> _CldNext;
 
+
 //state variables
 float _PActStart;
 float _PHumStart;
@@ -53,7 +54,11 @@ uint _WindStartGen;
 uint _ExtStartGen;
 
 //other
-uint _CloudCount;
+float _CellHeight;
+//bottom Y of the CA to calculate wind speeds
+float _CABottomPosition;
+float _NormalWindSpeed;
+RWStructuredBuffer<float3> _CloudPositions;
 
 //returns the amount of int in the cells buffer
 uint GetBufferSize()
@@ -157,6 +162,97 @@ void ProcessGrowthRules(const uint cellIdx)
     , !currentAct && currentHum && GetActFromSurrounding(cellIdx));
 }
 
+//processes the extinction rules
+void ProcessExtRules(const uint cellIdx)
+{
+    float rand = .001f; //TODO: this should get a rand number between 0 and 1
+    uint intIdx, bitIdx;
+    GetBitPosition(cellIdx, intIdx, bitIdx);
+
+    const bool currentAct = CheckBit(_Act[intIdx], bitIdx)
+	, currentHum = CheckBit(_Hum[intIdx], bitIdx)
+	, currentCld = CheckBit(_Cld[intIdx], bitIdx);
+
+	//hum
+    _HumNext[intIdx] = SetBit(_Hum[intIdx], bitIdx, currentHum || rand < _PHum);
+
+	//cld
+    _CldNext[intIdx] = SetBit(_Cld[cellIdx], bitIdx, currentCld && rand > _PExt);
+
+	//act
+    _ActNext[intIdx] = SetBit(_Act[intIdx], bitIdx, currentAct || rand < _PAct);
+}
+
+//returns the cell height in the world
+float GetCellHeightInWorld(const int cellIdxK)
+{
+    return _CABottomPosition + (float) cellIdxK * _CellHeight;
+}
+
+int WindSpeedCellDisplacementAtHeight(const float height,const float normalSpeed)
+{
+    return 1;
+}
+
+//moves the clouds with the wind
+void ProcessWind(const uint cellIdx)
+{
+	//i j k of cell for wind displacement
+    uint cellIdxI, cellIdxJ, cellIdxK;
+    OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
+
+	//bit and int idx of cell 
+    uint intIdx, bitIdx;
+    GetBitPosition(cellIdx, intIdx, bitIdx);
+	
+    const float cellHeight = GetCellHeightInWorld(cellIdxK);
+    const int cellDisplacementByWind = WindSpeedCellDisplacementAtHeight(cellHeight, _NormalWindSpeed);
+
+    if (cellIdxI - cellDisplacementByWind >= 0)
+    {
+        const int cellIdxDisplacementByWind = ThreeDToOneDIndex(cellIdxI - cellDisplacementByWind, cellIdxJ, cellIdxK);
+
+    	//bit and int idx of wind cell
+    	uint intIdxWind, bitIdxWind;
+        GetBitPosition(cellIdxDisplacementByWind, intIdxWind, bitIdxWind);
+
+    	//hum
+        _HumNext[intIdx] = SetBit(_HumNext[intIdx], bitIdx, CheckBit(_Hum[intIdxWind], bitIdxWind));
+
+    	//cld
+        _CldNext[intIdx] = SetBit(_CldNext[intIdx], bitIdx, CheckBit(_Cld[intIdxWind], bitIdxWind));
+
+    	//act
+        _ActNext[intIdx] = SetBit(_ActNext[intIdx], bitIdx, CheckBit(_Act[intIdxWind], bitIdxWind));
+    }
+	else if(cellIdxI == 0)
+	{
+        _HumNext[intIdx] = SetBit(_HumNext[intIdx], bitIdx, false);
+        _CldNext[intIdx] = SetBit(_CldNext[intIdx], bitIdx, false);
+        _ActNext[intIdx] = SetBit(_ActNext[intIdx], bitIdx, false);
+    }
+}
+
+//sets the position of a cell to the cloud positions if cld = 1 of this cell
+void CloudPosition(const uint cellIdx)
+{
+    uint intIdx, bitIdx;
+    GetBitPosition(cellIdx, intIdx, bitIdx);
+    if (CheckBit(_Cld[intIdx], bitIdx))
+    {
+        uint cellIdxI, cellIdxJ, cellIdxK;
+        OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
+        const float3 cloudPos = float3((float) cellIdxI, (float) cellIdxJ, (float) cellIdxK);
+        _CloudPositions[cellIdx] = cloudPos;
+    }
+	else
+	{
+        _CloudPositions[cellIdx] = float3(-1, -1, -1);
+    }
+}
+
+
+
 //processes the cells, does the state transition functions
 [numthreads(1,1,1)]
 void CSProcessCells(uint3 id : SV_DispatchThreadID)
@@ -164,10 +260,9 @@ void CSProcessCells(uint3 id : SV_DispatchThreadID)
     for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
     {
         ProcessGrowthRules(cellIdx);
-        uint intIdx, bitIdx;
-        GetBitPosition(cellIdx, intIdx, bitIdx);
-        if (CheckBit(_Cld[intIdx], bitIdx))
-            _CloudCount++;       
+        ProcessExtRules(cellIdx);
+        ProcessWind(cellIdx);
+        CloudPosition(cellIdx);     
     }
 
     _Act = _ActNext;
