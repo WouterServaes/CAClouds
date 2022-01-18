@@ -1,0 +1,198 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSProcessCells
+#pragma kernel CSInitializeCells
+
+//------------------------ bitwise helpers
+//returns true if bit at given position is 1, false if 0
+bool CheckBit(const int data, const uint bitPosition)
+{
+    const int n = data >> bitPosition;
+    return n & 1;
+}
+
+//set bit at given position in int to 1 
+//https://stackoverflow.com/questions/24250582/set-a-specific-bit-in-an-int
+int SetBit(int data, const uint bitPosition)
+{
+    data |= 1 << bitPosition;
+    return data;
+}
+
+//set bit at given position in int to 0
+//https://stackoverflow.com/questions/24250582/set-a-specific-bit-in-an-ints
+int ResetBit(int data, const uint bitPosition)
+{
+    data &= ~(1 << bitPosition);
+    return data;
+}
+//------------------------
+
+//shader variables
+float _RandomSeed; //set int c#
+const uint IntBits = 32;
+
+//grid variables
+uint _Columns, _Rows, _Depth;
+
+//cell variables
+uint _CellCount;
+RWStructuredBuffer<int> _Act;
+RWStructuredBuffer<int> _Hum;
+RWStructuredBuffer<int> _Cld;
+RWStructuredBuffer<int> _ActNext;
+RWStructuredBuffer<int> _HumNext;
+RWStructuredBuffer<int> _CldNext;
+
+//state variables
+float _PActStart;
+float _PHumStart;
+float _PExt;
+float _PHum;
+float _PAct;
+uint _WindStartGen;
+uint _ExtStartGen;
+
+//other
+uint _CloudCount;
+
+//returns the amount of int in the cells buffer
+uint GetBufferSize()
+{
+	//cells / bits per int
+    return _CellCount / IntBits;
+}
+
+//https://www.shadertoy.com/view/XlXcW4
+//float3 hash(float3 x)
+//{
+//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
+//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
+//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
+    
+//    return float3(x) * (1.0 / float(0xffffffffU));
+//}
+
+//1d index to 3d index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
+void OneDToThreeDIndex(uint cellIdx, out uint i, out uint j, out uint k)
+{
+    k = cellIdx / (_Columns * _Rows);
+    cellIdx -= k * _Columns * _Rows;
+    j = cellIdx / _Columns;
+    cellIdx -= j * _Columns;
+    i = cellIdx / 1;
+}
+
+//3d array index to 1d array index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
+uint ThreeDToOneDIndex(const uint i, const uint j, const uint k)
+{
+    return i + j * _Columns + k * _Columns * _Rows;
+}
+
+//sets the bit to 0 or 1 in data at position
+int SetBit(const int data, const uint bitPosition, const bool bit)
+{
+    if (bit)
+        return SetBit(data, bitPosition);
+    return ResetBit(data, bitPosition);
+}
+
+//from a cell index, gives the int index in the array and the bit index of this int
+void GetBitPosition(const uint cellIdx, out uint intIdx, out uint bitIdx)
+{
+    intIdx = cellIdx / IntBits;
+    bitIdx = cellIdx - (intIdx * IntBits);
+}
+
+//returns the ACT state of a cell
+bool IsActOfCell(const uint cellIdx)
+{
+    uint intIdx, bitIdx;
+    GetBitPosition(cellIdx, intIdx, bitIdx);
+    return CheckBit(_Act[intIdx], bitIdx);
+}
+
+bool GetActFromSurrounding(const uint cellIdx)
+{
+    uint cellIdxI, cellIdxJ, cellIdxK;
+    OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
+
+    return (cellIdxI + 1 < _Columns && IsActOfCell(ThreeDToOneDIndex(cellIdxI + 1, cellIdxJ, cellIdxK)))
+            || (cellIdxI > 0 && IsActOfCell(ThreeDToOneDIndex(cellIdxI - 1, cellIdxJ, cellIdxK)))
+
+            || (cellIdxJ + 1 < _Rows && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ + 1, cellIdxK)))
+            || (cellIdxJ > 0 && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ - 1, cellIdxK)))
+
+            || (cellIdxK + 1 < _Depth && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK + 1)))
+            || (cellIdxK > 0 && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK - 1)))
+
+            || (cellIdxI + 2 < _Columns && IsActOfCell(ThreeDToOneDIndex(cellIdxI + 2, cellIdxJ, cellIdxK)))
+            || (cellIdxI > 1 && IsActOfCell(ThreeDToOneDIndex(cellIdxI - 2, cellIdxJ, cellIdxK)))
+
+            || (cellIdxJ + 2 < _Rows && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ + 2, cellIdxK)))
+            || (cellIdxJ > 1 && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ - 2, cellIdxK)))
+
+            || (cellIdxK > 1 && IsActOfCell(ThreeDToOneDIndex(cellIdxI, cellIdxJ, cellIdxK - 2)));
+
+}
+
+void ProcessGrowthRules(const uint cellIdx)
+{
+    uint intIdx, bitIdx;
+    GetBitPosition(cellIdx, intIdx, bitIdx);
+	
+    const bool currentAct = CheckBit(_Act[intIdx], bitIdx)
+	, currentHum = CheckBit(_Hum[intIdx], bitIdx)
+	, currentCld = CheckBit(_Cld[intIdx], bitIdx);
+
+	//hum
+    _HumNext[intIdx] = SetBit(_HumNext[intIdx], bitIdx
+    , currentHum && !currentAct);
+	
+	//cld
+    _CldNext[intIdx] = SetBit(_CldNext[intIdx], bitIdx
+    , currentCld || currentAct);
+
+	//act
+    _ActNext[intIdx] = SetBit(_ActNext[intIdx], bitIdx
+    , !currentAct && currentHum && GetActFromSurrounding(cellIdx));
+}
+
+//processes the cells, does the state transition functions
+[numthreads(1,1,1)]
+void CSProcessCells(uint3 id : SV_DispatchThreadID)
+{
+    for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
+    {
+        ProcessGrowthRules(cellIdx);
+        uint intIdx, bitIdx;
+        GetBitPosition(cellIdx, intIdx, bitIdx);
+        if (CheckBit(_Cld[intIdx], bitIdx))
+            _CloudCount++;       
+    }
+
+    _Act = _ActNext;
+    _Hum = _HumNext;
+    _Cld = _CldNext;
+}
+
+void SetInitialValues()
+{
+    uint intIdx, bitIdx;
+    for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
+    {
+        GetBitPosition(cellIdx, intIdx, bitIdx);
+    	
+        const float rand = .001f; //TODO: this should get a rand number between 0 and 1
+        const bool humAtStart = rand <= _PHumStart;
+        _Hum[intIdx] = SetBit(_Hum[intIdx], bitIdx, humAtStart);
+        if (!humAtStart)
+            _Act[intIdx] = SetBit(_Act[intIdx], bitIdx, rand <= _PActStart);
+    }
+}
+
+//Initializes the cells, sets the states of the cell at t = 0
+[numthreads(1,1,1)]
+void CSInitializeCells(uint3 id : SV_DispatchThreadID)
+{
+    SetInitialValues();    
+}

@@ -7,11 +7,15 @@ public class CAGrid : MonoBehaviour
     [SerializeField] private WindSettings _WindSettings = null;
     [SerializeField] private bool _DrawGridOutline = true;
     [SerializeField] private bool _DrawCloudCells = true;
-    
+    [SerializeField] private bool _UseShader = true;
+
     private CellularAutomaton _CA;
+    private CellularAutomatonShader _CAS;
     private void Start()
     {
         _CA = GetComponent<CellularAutomaton>();
+        _CAS = GetComponent<CellularAutomatonShader>();
+
         _CA.CAGridSettings = _CAGridSettings;
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
         _WindSettings.UpdatedWind += RotateGridToWind;
@@ -23,13 +27,22 @@ public class CAGrid : MonoBehaviour
     {
         if (_DrawGridOutline)
             DrawGridOutline();
-        if (_DrawCloudCells && _CA != null)
-            DrawCloudCells();
+        if (_DrawCloudCells)
+        {
+            if (!_UseShader && _CA != null)
+                DrawCloudCells();
+            
+
+        }
     }
 
     private void InitializeCells()
     {
-        _CA.InitializeCA();
+        _CAS.enabled = _UseShader;
+        _CA.enabled = !_UseShader;
+
+        if (!_UseShader)
+            _CA.InitializeCA();
     }
 
     private void DrawGridOutline()

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -20,10 +19,7 @@ public class CellularAutomaton : MonoBehaviour
     private List<int> _CloudCells = new List<int>();
     public List<int> CloudCells => _CloudCells;
     private int _StateCount = 3;
-    //state var positions:
-    //0 = act
-    //1 = cld
-    //2 = hum
+    
 
     //Invoked in CellularAutomatonEditor by pressing GUI buttons
     public UnityAction<bool> PauseContinueAction; //pauses and continues ca, true = paused | false = not paused
