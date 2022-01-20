@@ -15,4 +15,4 @@ MonoBehaviour:
   Columns: 10
   Rows: 5
   Depth: 10
-  CellHeight: 10
+  CellHeight: 1

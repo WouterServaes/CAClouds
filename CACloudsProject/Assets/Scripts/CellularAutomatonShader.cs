@@ -15,13 +15,14 @@ public class CellularAutomatonShader : MonoBehaviour
     private ComputeBuffer _ActBuffer, _CldBuffer, _HumBuffer;
     private ComputeBuffer _ActNextBuffer, _CldNextBuffer, _HumNextBuffer;
     private ComputeBuffer _CloudPositions;
+    private ComputeBuffer _GenCounter;
     private int TotalInts => _CAGridSettings.TotalCells/32;
     //kernel IDs
     private int _ProcessCellsKernel;
     private int _InitCellsKernel;
     //other IDs
-    private int _CloudCountID;
-
+    private int _CloudPositionsId;
+    private int _RandomSeedId;
 
     //CA Settings
     [SerializeField] private CASettings _CASettings = null;
@@ -42,9 +43,6 @@ public class CellularAutomatonShader : MonoBehaviour
     //Metric saver
     private Metrics _Metrics = null;
 
-
-
-
     private void Start()
     {
         InitializeComputeShader();
@@ -53,6 +51,7 @@ public class CellularAutomatonShader : MonoBehaviour
         PauseContinueAction += PauseContinue;
         ResetAction += ResetCA;
         PauseContinue(false);
+        
     }
     private void Update()
     {
@@ -63,14 +62,16 @@ public class CellularAutomatonShader : MonoBehaviour
             {
                 _ElapsedSec = 0f;
                 UpdateCAShader();
-
             }
         }
+        DrawClouds();
     }
 
+    //sets all the variables and buffers of the shader
     private void InitializeComputeShader()
     {
-        //buffers & variables
+        //initializing buffers
+        //CA buffers
         _ActBuffer = new ComputeBuffer(TotalInts, sizeof(int));
         _HumBuffer = new ComputeBuffer(TotalInts, sizeof(int));
         _CldBuffer = new ComputeBuffer(TotalInts, sizeof(int));  
@@ -78,16 +79,25 @@ public class CellularAutomatonShader : MonoBehaviour
         _HumNextBuffer = new ComputeBuffer(TotalInts, sizeof(int));
         _CldNextBuffer = new ComputeBuffer(TotalInts, sizeof(int));  
 
-        _CloudPositions = new ComputeBuffer(TotalInts, sizeof(float)*3);
+        //other buffers
+        _CloudPositions = new ComputeBuffer(_CAGridSettings.TotalCells, sizeof(float)*3);
+        _GenCounter = new ComputeBuffer(1, sizeof(int));
+        
+        //setting buffers
+        //CA buffers
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_Act", _ActBuffer);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_Hum", _HumBuffer);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_Cld", _CldBuffer);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_ActNext", _ActNextBuffer);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_HumNext", _HumNextBuffer);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_CldNext", _CldNextBuffer);
 
-        _ComputeShader.SetBuffer(0, "_Act", _ActBuffer);
-        _ComputeShader.SetBuffer(0, "_Hum", _HumBuffer);
-        _ComputeShader.SetBuffer(0, "_Cld", _CldBuffer);
-        _ComputeShader.SetBuffer(0, "_ActNext", _ActNextBuffer);
-        _ComputeShader.SetBuffer(0, "_HumNext", _HumNextBuffer);
-        _ComputeShader.SetBuffer(0, "_CldNext", _CldNextBuffer);
-        _ComputeShader.SetBuffer(0, "_CloudPositions", _CloudPositions);
+        //other buffers
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_CloudPositions", _CloudPositions);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, "_GenCounter", _GenCounter);
 
+        //Settings variables
+        //Grid variables
         _ComputeShader.SetInt("_CellCount", _CAGridSettings.TotalCells);
         _ComputeShader.SetInt("_Columns", _CAGridSettings.Columns);
         _ComputeShader.SetInt("_Rows", _CAGridSettings.Rows);
@@ -97,7 +107,6 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetInt("_WindStartGen", _CASettings.WindStartGeneration);
         _ComputeShader.SetInt("_ExtStartGen", _CASettings.ExtStartGeneration);
         
-        
         //probability variables
         _ComputeShader.SetFloat("_PActStart", _CASettings.ActProbabilityAtStart);
         _ComputeShader.SetFloat("_PHumStart", _CASettings.HumProbabilityAtStart);
@@ -105,29 +114,51 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetFloat("_PHum", _CASettings.HumProbability);
         _ComputeShader.SetFloat("_PAct", _CASettings.ActProbability);
 
-        _CloudCountID = Shader.PropertyToID("_CloudCount");
+        
+        //saving Property IDs
         //kernels
         _ProcessCellsKernel = _ComputeShader.FindKernel("CSProcessCells");
         _InitCellsKernel = _ComputeShader.FindKernel("CSInitializeCells");
+        //other
+        _CloudPositionsId = Shader.PropertyToID("_CloudPositions");
+        _RandomSeedId = Shader.PropertyToID("_RandomSeed");
     }
 
     private void UpdateCAShader()
     {
-        _ComputeShader.SetFloat("_RandomSeed", Time.time);
+        _ComputeShader.SetFloat(_RandomSeedId, Time.time);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.Dispatch(_ProcessCellsKernel, 1,1,1);
+
+        //generation counter
+        int[] counter = new int[1];
+        _GenCounter.GetData(counter);
+        Debug.Log(counter[0]);
     }
 
+    private void DrawClouds()
+    {
+        _CloudMaterial.SetBuffer(_CloudPositionsId, _CloudPositions);
+        Graphics.DrawMeshInstancedProcedural(_CloudMesh, 0, _CloudMaterial
+            , _CAGridSettings.GridBouds, _CloudPositions.count);
+    }
     private void OnDestroy()
     {
-        _ActBuffer.Release();
-        _HumBuffer.Release();
-        _CldBuffer.Release();
-        _ActNextBuffer.Release();
-        _HumNextBuffer.Release();
-        _CldNextBuffer.Release();
-        _CloudPositions.Release();
+        DestroyBuffer(_ActBuffer);
+        DestroyBuffer(_HumBuffer);
+        DestroyBuffer(_CldBuffer);
+        DestroyBuffer(_ActNextBuffer);
+        DestroyBuffer(_HumNextBuffer);
+        DestroyBuffer(_CldNextBuffer);
+        DestroyBuffer(_CloudPositions);
+        DestroyBuffer(_GenCounter);
     }
 
+    private void DestroyBuffer(ComputeBuffer buffer)
+    {
+        buffer.Release();
+        buffer = null;
+    }
     private void PauseContinue(bool isPaused)
     {
         _IsPaused = isPaused;
@@ -156,11 +187,13 @@ public class CellularAutomatonShader : MonoBehaviour
         _ActNextBuffer.SetData(resetArray);
         _HumNextBuffer.SetData(resetArray);
         _CldNextBuffer.SetData(resetArray);
+        _GenCounter.SetData(new int[1] { 0 });
 
-        _ComputeShader.SetBuffer(_InitCellsKernel, "_Act", _ActBuffer);
-        _ComputeShader.SetBuffer(_InitCellsKernel, "_Hum", _HumBuffer);
-
-        _ComputeShader.SetFloat("_RandomSeed", Time.time);
-        _ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
+       // _ComputeShader.SetBuffer(_InitCellsKernel, "_Act", _ActBuffer);
+       // _ComputeShader.SetBuffer(_InitCellsKernel, "_Hum", _HumBuffer);
+       // _ComputeShader.SetFloat("_RandomSeed", Time.time);
+       // _ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
+       // _ComputeShader.SetBuffer(_ProcessCellsKernel, "_Act", _ActBuffer);
+       // _ComputeShader.SetBuffer(_ProcessCellsKernel, "_Hum", _HumBuffer);
     }
 }

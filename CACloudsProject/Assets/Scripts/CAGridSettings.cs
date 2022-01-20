@@ -13,4 +13,10 @@ public class CAGridSettings : ScriptableObject
     
     //Invoked in GridEditorSettings by pressing GUI button
     public UnityAction UpdatedGridSettingsAction;
+
+    //The bounds of the whole grid
+    public Bounds GridBouds => new Bounds(
+        Vector3.zero, 
+        new Vector3(Columns * CellHeight, Rows * CellHeight, Depth * CellHeight)
+        );
 }
