@@ -42,8 +42,8 @@ public class CellularAutomatonShader : MonoBehaviour
         _PHumId,
         _PActId,
         _WindStartGenId,
-        _ExtStartGenId,
-        _TimeSecondsId;
+        _ExtStartGenId;
+        //_TimeSecondsId;
 
     //Total int: the amount of integers required to store the states of the grid: 500 cells take up 15.625 integers, so 16 integers are required.
     private int _TotalInts;
@@ -136,7 +136,7 @@ public class CellularAutomatonShader : MonoBehaviour
 
         //other
         SetPropId(out _CloudPositionsId, "_CloudPositions");
-        SetPropId(out _TimeSecondsId, "_TimeSeconds");
+        //SetPropId(out _TimeSecondsId, "_TimeSeconds");
         SetPropId(out _GenCounterId, "_GenCounter");
         SetPropId(out _CellCountId, "_CellCount");
         SetPropId(out _ColumnsId, "_Columns");
@@ -155,8 +155,9 @@ public class CellularAutomatonShader : MonoBehaviour
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
+        //TODO: for some reason all no cloud is active, even when all Hums are 1 at the start
         //buffers
-        //_ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
+        _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _GenCounterId, _GenCounter);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CldBufferId, _CldBuffer);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _HumBufferId, _HumBuffer);
@@ -173,7 +174,7 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetFloat(_CellHeightId, _CAGridSettings.CellHeight);
         _ComputeShader.SetFloat(_CABottomPositionId, transform.position.y);
         //_ComputeShader.SetFloat(_NormalWindSpeedId, );
-        _ComputeShader.SetFloat(_TimeSecondsId, Time.time);
+        //_ComputeShader.SetFloat(_TimeSecondsId, Time.time);
 
         //probability variables
         _ComputeShader.SetFloat(_PExtId, _CASettings.ExtProbability);
@@ -233,36 +234,55 @@ public class CellularAutomatonShader : MonoBehaviour
     public void InitializeCA()
     {
         //reset all buffers with 0
-        int[] resetArray = new int[TotalInts];
+        int[] initialInts = new int[TotalInts];
         for (uint idx = 0; idx < TotalInts; idx++)
-            resetArray[idx] = 0x000000;
+            initialInts[idx] = 0x000000;
         
-        _ActBuffer.SetData(resetArray);
-        _HumBuffer.SetData(resetArray);
-        _CldBuffer.SetData(resetArray);
-        _ActNextBuffer.SetData(resetArray);
-        _HumNextBuffer.SetData(resetArray);
-        _CldNextBuffer.SetData(resetArray);
+        //_ActBuffer.SetData(initialInts);
+        //_HumBuffer.SetData(initialInts);
+        _CldBuffer.SetData(initialInts);
+        _ActNextBuffer.SetData(initialInts);
+        _HumNextBuffer.SetData(initialInts);
+        _CldNextBuffer.SetData(initialInts);
 
         //reset generation counter
         _GenCounter.SetData(new int[1] { 0 });
-
-        //set variables of compute shader that initialize kernel uses
-        _ComputeShader.SetFloat("_PActStart", _CASettings.ActProbabilityAtStart);
-        _ComputeShader.SetFloat("_PHumStart", _CASettings.HumProbabilityAtStart);
-        _ComputeShader.SetInt(_CellCountId, _CAGridSettings.TotalCells);
         
-        _ComputeShader.SetFloat(_TimeSecondsId, UnityEngine.Random.Range(.1f, 10f));
-        //initialize kernel uses these buffers
-        _ComputeShader.SetBuffer(_InitCellsKernel, _HumBufferId, _HumBuffer);
-        _ComputeShader.SetBuffer(_InitCellsKernel, _ActBufferId, _ActBuffer);
-        _ComputeShader.SetBuffer(_InitCellsKernel, _GenCounterId, _GenCounter);
-        _ComputeShader.SetInt(_ColumnsId, _CAGridSettings.Columns);
-        _ComputeShader.SetInt(_RowsId, _CAGridSettings.Rows);
-        _ComputeShader.SetInt(_DepthId, _CAGridSettings.Depth);
-        //Dispatch initialize kernel
-        _ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
- 
+        //set variables of compute shader that initialize kernel uses
+        //_ComputeShader.SetFloat("_PActStart", _CASettings.ActProbabilityAtStart);
+        //_ComputeShader.SetFloat("_PHumStart", _CASettings.HumProbabilityAtStart);
+        //_ComputeShader.SetInt(_CellCountId, _CAGridSettings.TotalCells);
+        //
+        //_ComputeShader.SetFloat(_TimeSecondsId, UnityEngine.Random.Range(.1f, 10f));
+        ////initialize kernel uses these buffers
+        //_ComputeShader.SetBuffer(_InitCellsKernel, _HumBufferId, _HumBuffer);
+        //_ComputeShader.SetBuffer(_InitCellsKernel, _ActBufferId, _ActBuffer);
+        //_ComputeShader.SetBuffer(_InitCellsKernel, _GenCounterId, _GenCounter);
+        //_ComputeShader.SetInt(_ColumnsId, _CAGridSettings.Columns);
+        //_ComputeShader.SetInt(_RowsId, _CAGridSettings.Rows);
+        //_ComputeShader.SetInt(_DepthId, _CAGridSettings.Depth);
+        //
+        ////Dispatch initialize kernel
+        //_ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
+
+        bool[] initialHum = new bool[_CAGridSettings.TotalCells];
+        bool[] initialAct = new bool[_CAGridSettings.TotalCells];
+        for (int idx = 0; idx < _CAGridSettings.TotalCells; idx++)
+        {
+            bool humAtStart = UnityEngine.Random.Range(0f, 1f) <= _CASettings.HumProbabilityAtStart;
+            initialHum[idx] = humAtStart;
+            if (!humAtStart)
+                initialAct[idx] = UnityEngine.Random.Range(0f, 1f) <= _CASettings.ActProbabilityAtStart;
+        }
+
+        BitArray tempBitArray = new BitArray(initialHum);
+        tempBitArray.CopyTo(initialInts, 0);
+        _HumBuffer.SetData(initialInts);
+
+        tempBitArray = new BitArray(initialAct);
+        tempBitArray.CopyTo(initialInts, 0);
+        _ActBuffer.SetData(initialInts);
+
     }
 
     //converts a compute ca state buffer to a bool array

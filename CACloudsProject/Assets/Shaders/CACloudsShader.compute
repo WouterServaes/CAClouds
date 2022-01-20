@@ -53,7 +53,7 @@ float _CellHeight;
 //bottom Y of the CA to calculate wind speeds
 float _CABottomPosition;
 float _NormalWindSpeed;
-float _TimeSeconds;
+//float _TimeSeconds;
 //cloud position buffer
 RWStructuredBuffer<float3> _CloudPositions;
 //generation counter, buffer so we can read it in c#
@@ -294,7 +294,7 @@ void CSProcessCells(uint3 id : SV_DispatchThreadID)
 	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 	{
 		ProcessGrowthRules(cellIdx);
-		if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
+		//if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
 		if (_GenCounter[0] >= _WindStartGen) ProcessWind(cellIdx);
 		CloudPosition(cellIdx);
 	}
