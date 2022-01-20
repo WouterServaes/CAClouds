@@ -28,7 +28,9 @@ int ResetBit(int data, const uint bitPosition)
 //------------------------
 
 //shader variables
-float _RandomSeed; //set int c#
+//set int c#
+float _RandomSeed; 
+//amount of Bits in int
 const uint IntBits = 32;
 
 //grid variables
@@ -103,7 +105,9 @@ int SetBit(const int data, const uint bitPosition, const bool bit)
 //from a cell index, gives the int index in the array and the bit index of this int
 void GetBitPosition(const uint cellIdx, out uint intIdx, out uint bitIdx)
 {
-	intIdx = cellIdx / IntBits;
+	float test = floor((float)cellIdx / 32.f);
+	intIdx = floor(cellIdx / 32);
+	//intIdx = (int)test;
 	bitIdx = cellIdx - (intIdx * IntBits);
 }
 
@@ -231,66 +235,74 @@ void ProcessWind(const uint cellIdx)
 	}
 }
 
+
+RWStructuredBuffer<int> TestBuffer;
 //sets the position of a cell to the cloud positions if cld = 1 of this cell
 void CloudPosition(const uint cellIdx)
 {
 	uint intIdx, bitIdx;
 	GetBitPosition(cellIdx, intIdx, bitIdx);
+	TestBuffer[cellIdx] = intIdx;
 	if (CheckBit(_Cld[intIdx], bitIdx))
 	{
+		const float cellHalfHeight = _CellHeight / 2.f;
 		uint cellIdxI, cellIdxJ, cellIdxK;
 		OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
 		const float3 cloudPos = float3(
-			(float)cellIdxI,
-			(float)cellIdxJ,
-			(float)cellIdxK);
+			(float)cellIdxI + cellHalfHeight,
+			(float)cellIdxJ + cellHalfHeight,
+			(float)cellIdxK + cellHalfHeight);
 
 		_CloudPositions[cellIdx] = cloudPos;
 	}
 	else
 	{
-		_CloudPositions[cellIdx] = float3(-1, -1, -1);
+		_CloudPositions[cellIdx] = float3(-100, -1, -1);
 	}
 }
 
-void SetInitialValues()
+void SetInitialValues(const uint cellIdx)
 {
 	uint intIdx, bitIdx;
-	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
-	{
+	//for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
+	//{
 		GetBitPosition(cellIdx, intIdx, bitIdx);
 
 		const float rand = .0001f; //TODO: this should get a rand number between 0 and 1
 		const bool humAtStart = rand <= _PHumStart;
+
 		_Hum[intIdx] = SetBit(_Hum[intIdx], bitIdx, humAtStart);
 		if (!humAtStart)
 			_Act[intIdx] = SetBit(_Act[intIdx], bitIdx, rand <= _PActStart);
-	}
+	//}
 }
 
 //processes the cells, does the state transition functions
 [numthreads(1, 1, 1)]
 void CSProcessCells(uint3 id : SV_DispatchThreadID)
 {
-	
+	if (_GenCounter[0] < 1)
+	{
 		for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 		{
-			if(_GenCounter[0]>3)
-			{
-				ProcessGrowthRules(cellIdx);
-				//ProcessExtRules(cellIdx);
-				//ProcessWind(cellIdx);
-			}
-			else SetInitialValues();
+			//if(_GenCounter[0]>3)
+			//{
+			//	ProcessGrowthRules(cellIdx);
+			//	ProcessExtRules(cellIdx);
+			//	ProcessWind(cellIdx);
+			//}
+			//else 
+			//	SetInitialValues(cellIdx);
 
 				CloudPosition(cellIdx);
 		}
 	
 
 	_GenCounter[0]++;
-	_Act = _ActNext;
-	_Hum = _HumNext;
-	_Cld = _CldNext;
+	//_Act = _ActNext;
+	//_Hum = _HumNext;
+	//_Cld = _CldNext;
+	}
 }
 
 
@@ -299,5 +311,5 @@ void CSProcessCells(uint3 id : SV_DispatchThreadID)
 [numthreads(1, 1, 1)]
 void CSInitializeCells(uint3 id : SV_DispatchThreadID)
 {
-	SetInitialValues();
+	//SetInitialValues();
 }
