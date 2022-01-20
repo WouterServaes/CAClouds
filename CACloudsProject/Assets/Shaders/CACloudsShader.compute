@@ -27,10 +27,6 @@ int ResetBit(int data, const uint bitPosition)
 }
 //------------------------
 
-//shader variables
-//set int c#
-float _RandomSeed;
-
 //grid variables
 uint _Columns, _Rows, _Depth;
 
@@ -42,7 +38,7 @@ RWStructuredBuffer<int> _Cld;
 RWStructuredBuffer<int> _ActNext;
 RWStructuredBuffer<int> _HumNext;
 RWStructuredBuffer<int> _CldNext;
-
+StructuredBuffer<float> _RandomNrs;
 //state variables
 float _PActStart;
 float _PHumStart;
@@ -60,18 +56,7 @@ float _NormalWindSpeed;
 //cloud position buffer
 RWStructuredBuffer<float3> _CloudPositions;
 //generation counter, buffer so we can read it in c#
-RWStructuredBuffer<int> _GenCounter;
-
-
-//https://www.shadertoy.com/view/XlXcW4
-//float3 hash(float3 x)
-//{
-//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
-//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
-//    x = ((x >> 8U) ^ x.yzx) * _RandomSeed;
-
-//    return float3(x) * (1.0 / float(0xffffffffU));
-//}
+RWStructuredBuffer<uint> _GenCounter;
 
 //1d index to 3d index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
 void OneDToThreeDIndex(uint cellIdx, out uint i, out uint j, out uint k)
@@ -165,7 +150,7 @@ void ProcessGrowthRules(const uint cellIdx)
 //processes the extinction rules
 void ProcessExtRules(const uint cellIdx)
 {
-	float rand = .001f; //TODO: this should get a rand number between 0 and 1
+	float rand = _RandomNrs[cellIdx];
 	uint intIdx, bitIdx;
 	GetBitPosition(cellIdx, intIdx, bitIdx);
 
@@ -266,8 +251,8 @@ void CSProcessCells(uint3 id : SV_DispatchThreadID)
 	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 	{
 		ProcessGrowthRules(cellIdx);
-		//if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
-		//if (_GenCounter[0] >= _WindStartGen) ProcessWind(cellIdx);
+		if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
+		if (_GenCounter[0] >= _WindStartGen) ProcessWind(cellIdx);
 
 		CloudPosition(cellIdx);
 	}
@@ -293,10 +278,10 @@ void SetInitialValues()
 {
 	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 	{
+		float rand = _RandomNrs[cellIdx];
 		uint intIdx, bitIdx;
 		GetBitPosition(cellIdx, intIdx, bitIdx);
 
-		const float rand = .0001f; //TODO: this should get a rand number between 0 and 1
 		const bool humAtStart = rand <= _PHumStart;
 
 		_Hum[intIdx] = SetBit(_Hum[intIdx], bitIdx, humAtStart);
