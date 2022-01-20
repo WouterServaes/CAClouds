@@ -38,7 +38,7 @@ RWStructuredBuffer<int> _Cld;
 RWStructuredBuffer<int> _ActNext;
 RWStructuredBuffer<int> _HumNext;
 RWStructuredBuffer<int> _CldNext;
-StructuredBuffer<float> _RandomNrs;
+//RWStructuredBuffer<float> _RandomNrs;
 //state variables
 float _PActStart;
 float _PHumStart;
@@ -53,13 +53,55 @@ float _CellHeight;
 //bottom Y of the CA to calculate wind speeds
 float _CABottomPosition;
 float _NormalWindSpeed;
+float _TimeSeconds;
 //cloud position buffer
 RWStructuredBuffer<float3> _CloudPositions;
 //generation counter, buffer so we can read it in c#
 RWStructuredBuffer<uint> _GenCounter;
+//
+////https://www.shadertoy.com/view/llGSzw
+//float hash1(uint n)
+//{
+//	
+//	// integer hash copied from Hugo Elias
+//	n = (n << 13U) ^ n;
+//	n = n * (n * n * 15731U + 789221U) + 1376312589U;
+//	return float(n & uint(0x7fffffffU)) / float(0x7fffffff);
+//}
+//
+////https://forum.unity.com/threads/generate-random-float-between-0-and-1-in-shader.610810/
+//float random(float2 uv)
+//{
+//	
+//	return frac(sin(dot(uv, float2(12.9898, 78.233)) * 43758.5453123));
+//}
+//
+//float randomForCell(const uint cellIdxI,const uint cellIdxJ, const uint cellIdx)
+//{
+//	//(value - min) / (max - min)
+//	float tempI = (float)(int)cellIdxI;
+//	float tempJ = (float)(int)cellIdxJ;
+//	tempI = (tempI - 1) / (_Columns - 1);
+//	tempJ = (tempJ - 1) / (_Rows - 1);
+//	float i = (_TimeSeconds + tempI) * cellIdx;
+//	float j = (_TimeSeconds + tempJ) * cellIdx;
+//
+//	//return hash1(tempI + 1920U * tempJ + (1920U * 1080U) * _GenCounter[0]);
+//
+//	 return random(float2(i, j));
+//}
 
 //1d index to 3d index https://stackoverflow.com/questions/13894028/efficient-way-to-compute-3d-indexes-from-1d-array-representation
 void OneDToThreeDIndex(uint cellIdx, out uint i, out uint j, out uint k)
+{
+	k = cellIdx / (_Columns * _Rows);
+	cellIdx -= k * _Columns * _Rows;
+	j = cellIdx / _Columns;
+	cellIdx -= j * _Columns;
+	i = cellIdx / 1;
+}
+
+void OneDToThreeDIndex(int cellIdx, out int i, out int j, out int k)
 {
 	k = cellIdx / (_Columns * _Rows);
 	cellIdx -= k * _Columns * _Rows;
@@ -91,6 +133,7 @@ void GetBitPosition(const uint cellIdx, out uint intIdx, out uint bitIdx)
 	intIdx = floor(cellIdx / IntBits);
 	bitIdx = cellIdx - (intIdx * (int)IntBits);
 }
+
 
 //returns the ACT state of a cell
 bool IsActOfCell(const uint cellIdx)
@@ -150,7 +193,7 @@ void ProcessGrowthRules(const uint cellIdx)
 //processes the extinction rules
 void ProcessExtRules(const uint cellIdx)
 {
-	float rand = _RandomNrs[cellIdx];
+	float rand = 0; //TODO: this
 	uint intIdx, bitIdx;
 	GetBitPosition(cellIdx, intIdx, bitIdx);
 
@@ -253,7 +296,6 @@ void CSProcessCells(uint3 id : SV_DispatchThreadID)
 		ProcessGrowthRules(cellIdx);
 		if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
 		if (_GenCounter[0] >= _WindStartGen) ProcessWind(cellIdx);
-
 		CloudPosition(cellIdx);
 	}
 
@@ -278,12 +320,21 @@ void SetInitialValues()
 {
 	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 	{
-		float rand = _RandomNrs[cellIdx];
+		float rand = 0.f;
+
+		//int cellIdxI, cellIdxJ, cellIdxK;
+		//OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
+		//
+		//
+		//float rand = randomForCell(cellIdxI, cellIdxJ, cellIdx);
+		//_RandomNrs[cellIdx] = rand;
+		
+
 		uint intIdx, bitIdx;
 		GetBitPosition(cellIdx, intIdx, bitIdx);
-
+		
 		const bool humAtStart = rand <= _PHumStart;
-
+		
 		_Hum[intIdx] = SetBit(_Hum[intIdx], bitIdx, humAtStart);
 		if (!humAtStart)
 			_Act[intIdx] = SetBit(_Act[intIdx], bitIdx, rand <= _PActStart);

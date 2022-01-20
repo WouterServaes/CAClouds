@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Events;
-using Random = System.Random;
 
 
 public class CellularAutomatonShader : MonoBehaviour
@@ -24,9 +23,8 @@ public class CellularAutomatonShader : MonoBehaviour
     //other buffers
     private ComputeBuffer _CloudPositions;
     private ComputeBuffer _GenCounter;
-    private ComputeBuffer _RandomNrs;
     //buffer Ids
-    private int _CloudPositionsId, _GenCounterId, _RandomNrsId;
+    private int _CloudPositionsId, _GenCounterId;
 
     //kernel IDs
     private int _ProcessCellsKernel;
@@ -123,7 +121,6 @@ public class CellularAutomatonShader : MonoBehaviour
         //other buffers
         _CloudPositions = new ComputeBuffer(_CAGridSettings.TotalCells, sizeof(float)*3);
         _GenCounter = new ComputeBuffer(1, sizeof(int));
-        _RandomNrs = new ComputeBuffer(_CAGridSettings.TotalCells, sizeof(float));
         //saving Property IDs
         //CA buffers
         SetPropId(out _CldBufferId, "_Cld");
@@ -153,22 +150,13 @@ public class CellularAutomatonShader : MonoBehaviour
         SetPropId(out _PActId, "_PAct");
         SetPropId(out _WindStartGenId, "_WindStartGen");
         SetPropId(out _ExtStartGenId, "_ExtStartGen");
-        SetPropId(out _RandomNrsId, "_RandomNrs");
     }
 
-    //Huge bottleneck, but I can't find any way to get a random float from 0 to 1 per cell via the shader...... I've been searching and trying for hours D:
-    private void FillRandomBuffer()
-    {
-        float[] r = new float[_CAGridSettings.TotalCells];
-        for (int idx = 0; idx < r.Length; idx++)
-            r[idx] = UnityEngine.Random.Range(0f, 1f);
-        _RandomNrs.SetData(r);
-    }
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
         //buffers
-        _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
+        //_ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _GenCounterId, _GenCounter);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CldBufferId, _CldBuffer);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _HumBufferId, _HumBuffer);
@@ -176,9 +164,6 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CldNextBufferId, _CldNextBuffer);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _HumNextBufferId, _HumNextBuffer);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _ActNextBufferId, _ActNextBuffer);
-        //set random numbers for each cell
-        FillRandomBuffer();
-        _ComputeShader.SetBuffer(_ProcessCellsKernel, _RandomNrsId, _RandomNrs);
 
         //variables
         _ComputeShader.SetInt(_CellCountId, _CAGridSettings.TotalCells);
@@ -224,7 +209,6 @@ public class CellularAutomatonShader : MonoBehaviour
         DestroyBuffer(_CldNextBuffer);
         DestroyBuffer(_CloudPositions);
         DestroyBuffer(_GenCounter);
-        DestroyBuffer(_RandomNrs);
     }
 
     private void DestroyBuffer(ComputeBuffer buffer)
@@ -267,18 +251,18 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetFloat("_PActStart", _CASettings.ActProbabilityAtStart);
         _ComputeShader.SetFloat("_PHumStart", _CASettings.HumProbabilityAtStart);
         _ComputeShader.SetInt(_CellCountId, _CAGridSettings.TotalCells);
-
+        
+        _ComputeShader.SetFloat(_TimeSecondsId, UnityEngine.Random.Range(.1f, 10f));
         //initialize kernel uses these buffers
         _ComputeShader.SetBuffer(_InitCellsKernel, _HumBufferId, _HumBuffer);
         _ComputeShader.SetBuffer(_InitCellsKernel, _ActBufferId, _ActBuffer);
-        //set random numbers for each cell
-        FillRandomBuffer();
-        _ComputeShader.SetBuffer(_InitCellsKernel, _RandomNrsId, _RandomNrs);
-
+        _ComputeShader.SetBuffer(_InitCellsKernel, _GenCounterId, _GenCounter);
+        _ComputeShader.SetInt(_ColumnsId, _CAGridSettings.Columns);
+        _ComputeShader.SetInt(_RowsId, _CAGridSettings.Rows);
+        _ComputeShader.SetInt(_DepthId, _CAGridSettings.Depth);
         //Dispatch initialize kernel
         _ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
-
-       
+ 
     }
 
     //converts a compute ca state buffer to a bool array
