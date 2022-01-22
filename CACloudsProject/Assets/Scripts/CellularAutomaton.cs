@@ -8,14 +8,14 @@ using Random = UnityEngine.Random;
 public class CellularAutomaton : MonoBehaviour
 {
     //settings
+    [Header("settings")]
     [SerializeField] private CASettings _CASettings = null;
-
     [SerializeField] private WindSettings _WindSettings = null;
     [SerializeField] private CAGridSettings _CAGridSettings = null;
 
     //cloud visuals
+    [Header("cloud visuals")]
     [SerializeField] private Mesh _CloudMesh = null;
-
     [SerializeField] private Material _CloudMaterial = null;
     private ComputeBuffer _CloudBuffer;
     private int _CloudBufferId;

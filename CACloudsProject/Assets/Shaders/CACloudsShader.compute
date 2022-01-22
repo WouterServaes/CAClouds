@@ -47,7 +47,6 @@ float _PHum;
 float _PAct;
 uint _WindStartGen;
 uint _ExtStartGen;
-
 //other
 float _CellHeight;
 //bottom Y of the CA to calculate wind speeds
@@ -57,7 +56,7 @@ float _NormalWindSpeed;
 //cloud position buffer
 RWStructuredBuffer<float3> _CloudPositions;
 //generation counter, buffer so we can read it in c#
-RWStructuredBuffer<uint> _GenCounter;
+RWStructuredBuffer<uint> _IntVariables;
 //
 ////https://www.shadertoy.com/view/llGSzw
 //float hash1(uint n)
@@ -268,6 +267,7 @@ void CloudPosition(const uint cellIdx)
 	GetBitPosition(cellIdx, intIdx, bitIdx);
 	if (CheckBit(_Cld[intIdx], bitIdx)) //check if cld state is on
 	{
+		_IntVariables[1]++;
 		const float cellHalfHeight = _CellHeight / 2.f;
 		uint cellIdxI, cellIdxJ, cellIdxK;
 		OneDToThreeDIndex(cellIdx, cellIdxI, cellIdxJ, cellIdxK);
@@ -277,7 +277,7 @@ void CloudPosition(const uint cellIdx)
 			(float)cellIdxJ + cellHalfHeight,
 			(float)cellIdxK + cellHalfHeight);
 		
-		_CloudPositions[cellIdx] = cloudPos;
+		_CloudPositions[_IntVariables[1]] = cloudPos;
 	}
 	else
 	{
@@ -291,15 +291,16 @@ void CloudPosition(const uint cellIdx)
 [numthreads(1, 1, 1)]
 void CSProcessCells(uint3 id : SV_DispatchThreadID)
 {
+	_IntVariables[1] = 0;
 	for (uint cellIdx = 0; cellIdx < _CellCount; cellIdx++)
 	{
 		ProcessGrowthRules(cellIdx);
 		//if(_GenCounter[0] >= _ExtStartGen)	ProcessExtRules(cellIdx);
-		if (_GenCounter[0] >= _WindStartGen) ProcessWind(cellIdx);
+		if (_IntVariables[0] >= _WindStartGen) ProcessWind(cellIdx);
 		CloudPosition(cellIdx);
 	}
 
-	_GenCounter[0]++;
+	_IntVariables[0]++;
 
 	//setting current states to next states
 	for (uint intIdx = 0; intIdx < _CellCount * 32; intIdx++)
