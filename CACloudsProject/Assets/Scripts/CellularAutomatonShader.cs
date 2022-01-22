@@ -46,6 +46,7 @@ public class CellularAutomatonShader : MonoBehaviour
         _ExtStartGenId;
 
     private int _CloudCount = 0;
+    private int _GenerationCount = 0;
     //Total int: the amount of integers required to store the states of the grid: 500 cells take up 15.625 integers, so 16 integers are required.
     private int _TotalInts;
     private int TotalInts
@@ -69,6 +70,8 @@ public class CellularAutomatonShader : MonoBehaviour
     [SerializeField] private Mesh _CloudMesh = null;
     [SerializeField] private Material _CloudMaterial = null;
 
+    
+
     //Invoked in CellularAutomatonEditor by pressing GUI buttons
     public UnityAction<bool> PauseContinueAction; //pauses and continues ca, true = paused | false = not paused
     public UnityAction ResetAction; //resets ca
@@ -80,6 +83,14 @@ public class CellularAutomatonShader : MonoBehaviour
     //Metric saver
     private Metrics _Metrics = null;
 
+    //info properties
+    public int CAMemoryCount => (_CAGridSettings == null) ? 0 : _CAGridSettings.TotalCells * 3;
+    public int CellMemoryCount => 3;
+    public int CellCount => (_CAGridSettings == null) ? 0 : _CAGridSettings.TotalCells;
+    public int GenerationCount => _GenerationCount;
+    public float AvgCalcTime => (_Metrics) ? _Metrics.GetAverageCalcTime() : 0;
+    public int CloudCount => _CloudCount;
+
     private void Start()
     {
         InitializeComputeShader();
@@ -87,8 +98,6 @@ public class CellularAutomatonShader : MonoBehaviour
         _Metrics = GetComponent<Metrics>();
         PauseContinueAction += PauseContinue;
         ResetAction += ResetCA;
-        PauseContinue(false);
-        
     }
     private void Update()
     {
@@ -159,6 +168,7 @@ public class CellularAutomatonShader : MonoBehaviour
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
+        _Metrics.StartCalcTimer();
         //buffers
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _IntVariableId, _IntVariableBuffer);
@@ -189,14 +199,22 @@ public class CellularAutomatonShader : MonoBehaviour
         //Dispatching process cells kernel of shader
         _ComputeShader.Dispatch(_ProcessCellsKernel, 1,1,1);
 
-        //generation counter
+        _Metrics.StopCalcTimer();
+
+        GetIntVariablesFromBuffer();
+        
+        
+    }
+
+    private void GetIntVariablesFromBuffer()
+    {
         int[] intVariables = new int[2];
         _IntVariableBuffer.GetData(intVariables);
-        Debug.Log(intVariables[0]);
+        //generation counter
+        _GenerationCount = intVariables[0];
         //cloud count
         _CloudCount = intVariables[1];
     }
-
     private void DrawClouds()
     {
         if (_CloudCount > 0)

@@ -43,6 +43,7 @@ public class CellularAutomatonEditor : Editor
 
     private void CAInfo(CellularAutomaton ca)
     {
+        GUILayout.Space(10);
         GUILayout.Label(string.Format("CA generation count: {0}", ca.GenerationCount));
         GUILayout.Label(string.Format("CA cell count: {0}", ca.CellCount));
         GUILayout.Label(string.Format("Cloud count: {0}", ca.CloudCount));

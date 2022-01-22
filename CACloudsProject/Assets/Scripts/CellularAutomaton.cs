@@ -17,6 +17,9 @@ public class CellularAutomaton : MonoBehaviour
     [Header("cloud visuals")]
     [SerializeField] private Mesh _CloudMesh = null;
     [SerializeField] private Material _CloudMaterial = null;
+
+    
+
     private ComputeBuffer _CloudBuffer;
     private int _CloudBufferId;
     private List<float3> _CloudPositions = new List<float3>();
