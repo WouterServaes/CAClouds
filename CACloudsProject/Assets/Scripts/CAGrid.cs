@@ -6,7 +6,6 @@ public class CAGrid : MonoBehaviour
     [SerializeField] private CACellSettings _CACellSettings = null;
     [SerializeField] private WindSettings _WindSettings = null;
     [SerializeField] private bool _DrawGridOutline = true;
-    [SerializeField] private bool _DrawCloudCells = true;
     [SerializeField] private bool _UseShader = true;
 
     private CellularAutomaton _CA;
@@ -16,7 +15,6 @@ public class CAGrid : MonoBehaviour
         _CA = GetComponent<CellularAutomaton>();
         _CAS = GetComponent<CellularAutomatonShader>();
 
-        _CA.CAGridSettings = _CAGridSettings;
         _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
         _WindSettings.UpdatedWind += RotateGridToWind;
         RotateGridToWind();
@@ -27,13 +25,6 @@ public class CAGrid : MonoBehaviour
     {
         if (_DrawGridOutline)
             DrawGridOutline();
-        if (_DrawCloudCells)
-        {
-            if (!_UseShader && _CA != null)
-                DrawCloudCells();
-            
-
-        }
     }
 
     private void InitializeCells()
@@ -43,6 +34,8 @@ public class CAGrid : MonoBehaviour
 
         if (!_UseShader)
             _CA.InitializeCA();
+        else
+            _CAS.InitializeCA();
     }
 
     private void DrawGridOutline()
@@ -55,33 +48,6 @@ public class CAGrid : MonoBehaviour
         Gizmos.DrawLine(gridPos, gridPos + (transform.right * _CAGridSettings.Columns * cellHeight));
         Gizmos.color = Color.green;
         Gizmos.DrawLine(gridPos, gridPos + (transform.up * _CAGridSettings.Rows * cellHeight));
-    }
-
-    private void DrawCloudCells()
-    {
-        List<int> cloudCells = _CA.CloudCells ;
-        if (cloudCells == null) return;
-
-        Vector3 gridPos = transform.position;
-        
-        float cellHeight = _CAGridSettings.CellHeight;
-        float halfHeight = cellHeight / 2f;
-       
-        Gizmos.color = _CACellSettings.CloudColor;
-        for(int idx = 0; idx < cloudCells.Count;idx++)
-        {
-            int cellIdxK, cellIdxJ, cellIdxI;
-            _CA.OneDToThreeDIndex(cloudCells[idx], out cellIdxI, out cellIdxJ, out cellIdxK);
-
-            Vector3 cellPos = new Vector3(
-                              cellIdxI * cellHeight + halfHeight
-                            , cellIdxJ * cellHeight + halfHeight
-                            , cellIdxK * cellHeight + halfHeight);
-
-            cellPos = transform.localToWorldMatrix * cellPos;
-
-            Gizmos.DrawSphere(cellPos, halfHeight);
-        }
     }
 
     private void RotateGridToWind()

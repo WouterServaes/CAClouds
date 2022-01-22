@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinimumUpdateTime: 1
   ActProbabilityAtStart: 0.001
-  HumProbabilityAtStart: 1
+  HumProbabilityAtStart: 0.01
   WindStartGeneration: 20
   ExtStartGeneration: 10
   ExtProbability: 0.01

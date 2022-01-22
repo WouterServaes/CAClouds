@@ -383,18 +383,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
-      propertyPath: _CloudMesh
-      value: 
-      objectReference: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
-      propertyPath: _CloudMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: 63bad67ecb24a3c4996c98757f219518, type: 2}
-    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
-      propertyPath: _CAGridSettings
-      value: 
-      objectReference: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}
     - target: {fileID: 3693451702640781443, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: m_Name
       value: Grid
@@ -441,6 +429,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3797599305533910049, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _UseShader
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}

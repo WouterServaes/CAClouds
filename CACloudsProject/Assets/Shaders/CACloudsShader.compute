@@ -276,7 +276,7 @@ void CloudPosition(const uint cellIdx)
 			(float)cellIdxI + cellHalfHeight,
 			(float)cellIdxJ + cellHalfHeight,
 			(float)cellIdxK + cellHalfHeight);
-
+		
 		_CloudPositions[cellIdx] = cloudPos;
 	}
 	else

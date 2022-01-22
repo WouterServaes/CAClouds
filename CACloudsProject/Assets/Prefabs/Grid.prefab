@@ -50,7 +50,6 @@ MonoBehaviour:
   _CACellSettings: {fileID: 11400000, guid: 64ce787c2941b244fa047710fea62b07, type: 2}
   _WindSettings: {fileID: 11400000, guid: 48d0ed7de55110642934a39dd7adc05e, type: 2}
   _DrawGridOutline: 1
-  _DrawCloudCells: 1
   _UseShader: 1
 --- !u!114 &8974632330823456379
 MonoBehaviour:
@@ -65,7 +64,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CASettings: {fileID: 11400000, guid: af4d545bbe07e7145a61672364bd41a2, type: 2}
-  _WindSettings: {fileID: 0}
+  _WindSettings: {fileID: 11400000, guid: 48d0ed7de55110642934a39dd7adc05e, type: 2}
+  _CAGridSettings: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}
+  _CloudMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  _CloudMaterial: {fileID: 2100000, guid: 63bad67ecb24a3c4996c98757f219518, type: 2}
 --- !u!114 &814313617403399864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -80,7 +82,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ComputeShader: {fileID: 7200000, guid: 51174b5d858290d46b513ae7d84e1a63, type: 3}
   _CASettings: {fileID: 11400000, guid: af4d545bbe07e7145a61672364bd41a2, type: 2}
-  _CAGridSettings: {fileID: 11400000, guid: 5d74ce4fb0b4bea4f9ecfb9bf378ff5d, type: 2}
+  _CloudMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  _CloudMaterial: {fileID: 2100000, guid: 63bad67ecb24a3c4996c98757f219518, type: 2}
+  _CAGridSettings: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}
 --- !u!114 &4717445481749669553
 MonoBehaviour:
   m_ObjectHideFlags: 0

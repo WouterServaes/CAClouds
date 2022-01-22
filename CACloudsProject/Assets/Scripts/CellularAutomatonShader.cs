@@ -78,7 +78,7 @@ public class CellularAutomatonShader : MonoBehaviour
     private void Start()
     {
         InitializeComputeShader();
-        InitializeCA();
+        
         _Metrics = GetComponent<Metrics>();
         PauseContinueAction += PauseContinue;
         ResetAction += ResetCA;
@@ -155,7 +155,6 @@ public class CellularAutomatonShader : MonoBehaviour
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
-        //TODO: for some reason all no cloud is active, even when all Hums are 1 at the start
         //buffers
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _GenCounterId, _GenCounter);
