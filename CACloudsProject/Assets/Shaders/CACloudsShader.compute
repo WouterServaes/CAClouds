@@ -128,7 +128,6 @@ void GetBitPosition(const uint cellIdx, out uint intIdx, out uint bitIdx)
 {
 	//amount of Bits in int
 	const float IntBits = 32.f;
-
 	intIdx = floor(cellIdx / IntBits);
 	bitIdx = cellIdx - (intIdx * (int)IntBits);
 }

@@ -17,6 +17,8 @@ public class CellularAutomatonEditor : Editor
         {
             PauseContinueButton(ca);
             ResetButton(ca);
+            NextGenAction(ca);
+            TakeScreenshot(ca);
         }
             CAInfo(ca);
     }
@@ -37,10 +39,29 @@ public class CellularAutomatonEditor : Editor
     {
         if(GUILayout.Button("Reset CA"))
         {
+            _PauseContinueButtonText = string.Format("Start");
+            _IsCaPaused = true;
             ca.ResetAction.Invoke();
         }
     }
 
+    private void NextGenAction(CellularAutomaton ca)
+    {
+        if (GUILayout.Button("Next generation"))
+        {
+            _IsCaPaused = true;
+            _PauseContinueButtonText = string.Format("Continue");
+            ca.NextGenerationAction.Invoke();
+        }
+    }
+
+    private void TakeScreenshot(CellularAutomaton ca)
+    {
+        if (GUILayout.Button("Take screenshot"))
+        {
+            ca.ScreenshotCamera.TakeScreenshotAction.Invoke();
+        }
+    }
     private void CAInfo(CellularAutomaton ca)
     {
         GUILayout.Space(10);

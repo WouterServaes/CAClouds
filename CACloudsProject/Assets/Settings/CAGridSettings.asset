@@ -15,4 +15,4 @@ MonoBehaviour:
   Columns: 256
   Rows: 20
   Depth: 128
-  CellHeight: 4
+  CellHeight: 1

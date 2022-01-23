@@ -12,6 +12,8 @@ public class CellularAutomaton : MonoBehaviour
     [SerializeField] private CASettings _CASettings = null;
     [SerializeField] private WindSettings _WindSettings = null;
     [SerializeField] private CAGridSettings _CAGridSettings = null;
+    [SerializeField] private ScreenshotCamera _ScreenshotCamera = null;
+    public ScreenshotCamera ScreenshotCamera => _ScreenshotCamera;
 
     //cloud visuals
     [Header("cloud visuals")]
@@ -41,6 +43,9 @@ public class CellularAutomaton : MonoBehaviour
 
     public UnityAction ResetAction; //resets ca
 
+    public UnityAction NextGenerationAction; //calculates and shows one generation
+
+    private bool _StepThroughGen = false;
     //Update timer
     private float _ElapsedSec = 0f;
 
@@ -64,10 +69,17 @@ public class CellularAutomaton : MonoBehaviour
         //assign events
         PauseContinueAction += PauseContinue;
         ResetAction += ResetCA;
+        NextGenerationAction += NextGeneration;
 
         //set cloud position buffer
         _CloudBuffer = new ComputeBuffer(_CAGridSettings.TotalCells, sizeof(float) * 3);
         _CloudBufferId = Shader.PropertyToID("_CloudPositions");
+    }
+
+    private void NextGeneration()
+    {
+        _StepThroughGen = true;
+        _IsPaused = true;
     }
 
     private void OnDestroy()
@@ -124,6 +136,13 @@ public class CellularAutomaton : MonoBehaviour
 
     private void Update()
     {
+        if (_StepThroughGen)
+        {
+            _StepThroughGen = false;
+            UpdateCA();
+            _ElapsedSec = 0f;
+        }
+
         if (!_IsPaused)
         {
             _ElapsedSec += Time.deltaTime;
