@@ -15,8 +15,8 @@ MonoBehaviour:
   MinimumUpdateTime: 0.1
   ActProbabilityAtStart: 0.001
   HumProbabilityAtStart: 0.01
-  WindStartGeneration: 1000
-  ExtStartGeneration: 3
+  WindStartGeneration: 3
+  ExtStartGeneration: 1000
   ExtProbability: 0.01
   HumProbability: 0.1
   ActProbability: 0.01
