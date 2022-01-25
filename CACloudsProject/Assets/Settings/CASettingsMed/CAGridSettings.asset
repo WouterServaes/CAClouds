@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e0ecce1aaa390b43922a319d4f273c3, type: 3}
-  m_Name: CAGridSettingsTest
+  m_Name: CAGridSettings
   m_EditorClassIdentifier: 
   Columns: 100
-  Rows: 50
+  Rows: 10
   Depth: 100
   CellHeight: 1

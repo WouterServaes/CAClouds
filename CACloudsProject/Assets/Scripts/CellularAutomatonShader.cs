@@ -168,7 +168,7 @@ public class CellularAutomatonShader : MonoBehaviour
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
-        _Metrics.StartCalcTimer();
+        _Metrics.StartCalcTimer(_GenerationCount+1);
         //buffers
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _IntVariableId, _IntVariableBuffer);
@@ -199,9 +199,9 @@ public class CellularAutomatonShader : MonoBehaviour
         //Dispatching process cells kernel of shader
         _ComputeShader.Dispatch(_ProcessCellsKernel, 1,1,1);
 
-        _Metrics.StopCalcTimer();
 
         GetIntVariablesFromBuffer();
+        _Metrics.StopCalcTimer(_GenerationCount);
         
         
     }
@@ -252,11 +252,13 @@ public class CellularAutomatonShader : MonoBehaviour
     private void ResetCA()
     {
         Debug.Log("Reset CA");
+        _Metrics.ClearMetrics();
         InitializeCA();
     }
 
     public void InitializeCA()
     {
+        
         //reset all buffers with 0
         int[] initialInts = new int[TotalInts];
         for (uint idx = 0; idx < TotalInts; idx++)
@@ -271,7 +273,7 @@ public class CellularAutomatonShader : MonoBehaviour
 
         //reset generation counter
         _IntVariableBuffer.SetData(new int[2] { 0 ,0});
-        
+
         //set variables of compute shader that initialize kernel uses
         //_ComputeShader.SetFloat("_PActStart", _CASettings.ActProbabilityAtStart);
         //_ComputeShader.SetFloat("_PHumStart", _CASettings.HumProbabilityAtStart);
@@ -288,7 +290,7 @@ public class CellularAutomatonShader : MonoBehaviour
         //
         ////Dispatch initialize kernel
         //_ComputeShader.Dispatch(_InitCellsKernel, 1,1,1);
-
+        _Metrics.StartCalcTimer();
         bool[] initialHum = new bool[_CAGridSettings.TotalCells];
         bool[] initialAct = new bool[_CAGridSettings.TotalCells];
         for (int idx = 0; idx < _CAGridSettings.TotalCells; idx++)
@@ -307,6 +309,7 @@ public class CellularAutomatonShader : MonoBehaviour
         tempBitArray.CopyTo(initialInts, 0);
         _ActBuffer.SetData(initialInts);
 
+        _Metrics.StopCalcTimer();
     }
 
     //converts a compute ca state buffer to a bool array

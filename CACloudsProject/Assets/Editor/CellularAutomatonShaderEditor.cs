@@ -4,9 +4,9 @@ using UnityEditor;
 [CustomEditor(typeof(CellularAutomatonShader))]
 public class CellularAutomatonShaderEditor : Editor
 {
-    private string _PauseContinueButtonText = string.Format("Start");
+    private string _PauseContinueButtonText = "Continue";
     private bool _IsCaPaused = true;
-
+    private bool _HasStarted = false;
 
     public override void OnInspectorGUI()
     {
@@ -15,10 +15,26 @@ public class CellularAutomatonShaderEditor : Editor
         CellularAutomatonShader cas = (CellularAutomatonShader)target;
         if (Application.isPlaying)
         {
-            PauseContinueButton(cas);
-            ResetButton(cas);
+            if (_HasStarted)
+            {
+                PauseContinueButton(cas);
+                ResetButton(cas);
+            }
+            else
+            {
+                StartButton(cas);
+            }
         }
         CAInfo(cas);
+    }
+
+    private void StartButton(CellularAutomatonShader cas)
+    {
+        if (GUILayout.Button("Start"))
+        {
+            _HasStarted = true;
+            cas.ResetAction.Invoke();
+        }
     }
 
     private void PauseContinueButton(CellularAutomatonShader cas)
@@ -26,8 +42,8 @@ public class CellularAutomatonShaderEditor : Editor
         if (GUILayout.Button(_PauseContinueButtonText))
         {
             _IsCaPaused = !_IsCaPaused;
-            if (_IsCaPaused) _PauseContinueButtonText = string.Format("Continue");
-            else _PauseContinueButtonText = string.Format("Pause");
+            if (_IsCaPaused) _PauseContinueButtonText = "Continue";
+            else _PauseContinueButtonText = "Pause";
 
             cas.PauseContinueAction.Invoke(_IsCaPaused);
         }

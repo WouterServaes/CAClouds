@@ -14,11 +14,11 @@ public class CAGrid : MonoBehaviour
     {
         _CA = GetComponent<CellularAutomaton>();
         _CAS = GetComponent<CellularAutomatonShader>();
-
-        _CAGridSettings.UpdatedGridSettingsAction += InitializeCells;
+        _CAS.enabled = _UseShader;
+        _CA.enabled = !_UseShader;
+        _CAGridSettings.UpdatedGridSettingsAction += ResetCells;
         _WindSettings.UpdatedWind += RotateGridToWind;
         RotateGridToWind();
-        InitializeCells();
     }
 
     private void OnDrawGizmos()
@@ -27,15 +27,12 @@ public class CAGrid : MonoBehaviour
             DrawGridOutline();
     }
 
-    private void InitializeCells()
+    private void ResetCells()
     {
-        _CAS.enabled = _UseShader;
-        _CA.enabled = !_UseShader;
-
         if (!_UseShader)
-            _CA.InitializeCA();
+            _CA.ResetAction.Invoke();
         else
-            _CAS.InitializeCA();
+            _CAS.ResetAction.Invoke();
     }
 
     private void DrawGridOutline()

@@ -355,6 +355,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _CASettings
+      value: 
+      objectReference: {fileID: 11400000, guid: af4d545bbe07e7145a61672364bd41a2, type: 2}
+    - target: {fileID: 814313617403399864, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _CAGridSettings
+      value: 
+      objectReference: {fileID: 11400000, guid: 5d74ce4fb0b4bea4f9ecfb9bf378ff5d, type: 2}
     - target: {fileID: 3693451702640781443, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: m_Name
       value: Grid
@@ -410,7 +418,7 @@ PrefabInstance:
     - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _CAGridSettings
       value: 
-      objectReference: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}
+      objectReference: {fileID: 11400000, guid: 87e44b9acfbd63d4583f9240d07cbeb1, type: 2}
     - target: {fileID: 4791334047874285691, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _DrawCloudCells
       value: 1
@@ -420,9 +428,13 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8974632330823456379, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
+      propertyPath: _CASettings
+      value: 
+      objectReference: {fileID: 11400000, guid: 678af66eac1a3544facfe1a918fcd489, type: 2}
+    - target: {fileID: 8974632330823456379, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _CAGridSettings
       value: 
-      objectReference: {fileID: 11400000, guid: 7db296b3585933043a03a3e5bb84db2d, type: 2}
+      objectReference: {fileID: 11400000, guid: 87e44b9acfbd63d4583f9240d07cbeb1, type: 2}
     - target: {fileID: 8974632330823456379, guid: e152a2a01d852cd4baac494ec8a91110, type: 3}
       propertyPath: _ScreenshotCamera
       value: 

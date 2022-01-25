@@ -4,9 +4,9 @@ using UnityEditor;
 [CustomEditor(typeof(CellularAutomaton))]
 public class CellularAutomatonEditor : Editor
 {
-    private string _PauseContinueButtonText = string.Format("Start");
+    private string _PauseContinueButtonText = string.Format("Continue");
     private bool _IsCaPaused = true;
-
+    private bool _HasStarted = false;
     
     public override void OnInspectorGUI()
     {
@@ -15,14 +15,29 @@ public class CellularAutomatonEditor : Editor
         CellularAutomaton ca = (CellularAutomaton)target;
         if (Application.isPlaying)
         {
-            PauseContinueButton(ca);
-            ResetButton(ca);
-            NextGenAction(ca);
+            if (_HasStarted)
+            {
+                PauseContinueButton(ca);
+                ResetButton(ca);
+                NextGenAction(ca);
+            }
+            else
+            {
+                StartButton(ca);
+            }
             TakeScreenshot(ca);
         }
             CAInfo(ca);
     }
 
+    private void StartButton(CellularAutomaton ca)
+    {
+        if (GUILayout.Button("Start"))
+        {
+            _HasStarted = true;
+            ca.ResetAction.Invoke();
+        }
+    }
     private void PauseContinueButton(CellularAutomaton ca)
     {
         if (GUILayout.Button(_PauseContinueButtonText))

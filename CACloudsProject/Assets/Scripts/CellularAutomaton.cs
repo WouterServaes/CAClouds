@@ -92,6 +92,7 @@ public class CellularAutomaton : MonoBehaviour
     //initializes the CA state containers and sets the initial states
     public void InitializeCA()
     {
+        _Metrics.StartCalcTimer();
         _Act = new BitArray(_CAGridSettings.TotalCells, false);
         _Cld = new BitArray(_CAGridSettings.TotalCells, false);
         _Hum = new BitArray(_CAGridSettings.TotalCells, false);
@@ -116,6 +117,7 @@ public class CellularAutomaton : MonoBehaviour
             if (!humAtStart)
                 _Act[idx] = Random.Range(0f, 1f) <= _CASettings.ActProbabilityAtStart;
         }
+        _Metrics.StopCalcTimer();
     }
 
     //Pauses and continues simulation
@@ -131,6 +133,7 @@ public class CellularAutomaton : MonoBehaviour
     private void ResetCA()
     {
         Debug.Log("Reset CA");
+        _Metrics.ClearMetrics();
         InitializeCA();
     }
 
@@ -182,8 +185,8 @@ public class CellularAutomaton : MonoBehaviour
         _Hum = (BitArray)_NextHum.Clone();
 
         //---stop metrics---
-        _Metrics.StopCalcTimer();
         _GenerationCount++;
+        _Metrics.StopCalcTimer(_GenerationCount);
     }
 
     //Draw the cloud cells using the gpu with Graphics.DrawMeshInstancedProcedural
