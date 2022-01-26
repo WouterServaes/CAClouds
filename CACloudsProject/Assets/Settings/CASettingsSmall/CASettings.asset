@@ -16,7 +16,7 @@ MonoBehaviour:
   ActProbabilityAtStart: 0.01
   HumProbabilityAtStart: 0.1
   WindStartGeneration: 100
-  ExtStartGeneration: 100
+  ExtStartGeneration: 1
   ExtProbability: 0.1
   HumProbability: 0.8
   ActProbability: 0.1

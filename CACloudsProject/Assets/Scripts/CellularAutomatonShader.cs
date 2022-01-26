@@ -8,6 +8,8 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Events;
 
+using Unity.Profiling;
+using UnityEngine.Profiling;
 
 public class CellularAutomatonShader : MonoBehaviour
 {
@@ -165,10 +167,12 @@ public class CellularAutomatonShader : MonoBehaviour
         SetPropId(out _ExtStartGenId, "_ExtStartGen");
     }
 
+    private ProfilerMarker _ProfileCAShader = new ProfilerMarker("CAShaderProfiler");
     //dispatches the process cell kernel
     private void UpdateCAShader()
     {
-        _Metrics.StartCalcTimer(_GenerationCount+1);
+        _ProfileCAShader.Begin();
+        //_Metrics.StartCalcTimer();
         //buffers
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _CloudPositionsId, _CloudPositions);
         _ComputeShader.SetBuffer(_ProcessCellsKernel, _IntVariableId, _IntVariableBuffer);
@@ -197,13 +201,15 @@ public class CellularAutomatonShader : MonoBehaviour
         _ComputeShader.SetInt(_ExtStartGenId, _CASettings.ExtStartGeneration);
         
         //Dispatching process cells kernel of shader
+        
         _ComputeShader.Dispatch(_ProcessCellsKernel, 1,1,1);
+        _ProfileCAShader.End();
+
+       // GetIntVariablesFromBuffer();
+        //_Metrics.StopCalcTimer(_GenerationCount);
+        
 
 
-        GetIntVariablesFromBuffer();
-        _Metrics.StopCalcTimer(_GenerationCount);
-        
-        
     }
 
     private void GetIntVariablesFromBuffer()

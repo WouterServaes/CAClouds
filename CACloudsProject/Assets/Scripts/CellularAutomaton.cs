@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Events;
+using Unity.Profiling;
+using UnityEngine.Profiling;
 using Random = UnityEngine.Random;
 
 public class CellularAutomaton : MonoBehaviour
@@ -159,11 +161,13 @@ public class CellularAutomaton : MonoBehaviour
         DrawCloudCells();
     }
 
+
+    private ProfilerMarker _ProfileCA = new ProfilerMarker("CAProfiler"); 
     //Updates the CA, goes over each cell, calls the rule functions for each cell and saves the position of the cell if it is a cloud
     private void UpdateCA()
     {
         _CloudCount = 0;
-        _Metrics.StartCalcTimer();
+        _ProfileCA.Begin();
         //---start metrics---
         //go over each cell
         for (int cellIdx = 0; cellIdx < _CAGridSettings.TotalCells; cellIdx++)
@@ -186,7 +190,7 @@ public class CellularAutomaton : MonoBehaviour
 
         //---stop metrics---
         _GenerationCount++;
-        _Metrics.StopCalcTimer(_GenerationCount);
+        _ProfileCA.End();
     }
 
     //Draw the cloud cells using the gpu with Graphics.DrawMeshInstancedProcedural
